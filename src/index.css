@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Terminal-inspired design system for Python developer portfolio */
+
+@layer base {
+  :root {
+    /* Dark terminal theme - main colors */
+    --background: 220 20% 7%;
+    --foreground: 60 9% 87%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 60 9% 87%;
+
+    --popover: 220 18% 10%;
+    --popover-foreground: 60 9% 87%;
+
+    /* Python-inspired green accent */
+    --primary: 142 76% 45%;
+    --primary-foreground: 220 20% 7%;
+
+    /* Warm amber secondary */
+    --secondary: 38 92% 55%;
+    --secondary-foreground: 220 20% 7%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 200 80% 55%;
+    --accent-foreground: 220 20% 7%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 60 9% 87%;
+
+    --border: 220 15% 18%;
+    --input: 220 15% 15%;
+    --ring: 142 76% 45%;
+
+    --radius: 0.5rem;
+
+    /* Custom tokens */
+    --terminal-green: 142 76% 45%;
+    --terminal-amber: 38 92% 55%;
+    --terminal-blue: 200 80% 55%;
+    --terminal-purple: 270 70% 60%;
+    --code-bg: 220 18% 12%;
+    --glow-green: 0 0 20px hsl(142 76% 45% / 0.4);
+    --glow-amber: 0 0 20px hsl(38 92% 55% / 0.4);
+
+    --sidebar-background: 220 18% 10%;
+    --sidebar-foreground: 60 9% 87%;
+    --sidebar-primary: 142 76% 45%;
+    --sidebar-primary-foreground: 220 20% 7%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 60 9% 87%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 142 76% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent;
+  }
+
+  .glow-primary {
+    box-shadow: var(--glow-green);
+  }
+
+  .glow-secondary {
+    box-shadow: var(--glow-amber);
+  }
+
+  .terminal-cursor {
+    @apply inline-block w-2 h-5 bg-primary animate-pulse;
+  }
+
+  .code-block {
+    @apply bg-[hsl(var(--code-bg))] rounded-lg border border-border font-mono;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  }
+
+  /* Page Transitions */
+  .fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .slide-out-left {
+    animation: slideOutLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .slide-in-left {
+    animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .slide-out-right {
+    animation: slideOutRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-100%); opacity: 0; }
+  }
+
+  @keyframes slideInLeft {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+}
