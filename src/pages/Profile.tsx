@@ -35,6 +35,11 @@ const Profile = () => {
 
     useEffect(() => {
         const fetchProfile = async () => {
+            if (!username || username === "undefined") {
+                toast.error("Invalid user identifier");
+                navigate("/");
+                return;
+            }
             setIsLoading(true);
             try {
                 const response = await fetch(`/api/users/profile/${username}`);
@@ -83,8 +88,8 @@ const Profile = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+                <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
             </div>
         );
     }
@@ -92,39 +97,49 @@ const Profile = () => {
     if (!profile) return null;
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="min-h-screen bg-slate-900 flex flex-col">
             <Navbar />
 
             <main className="flex-1 pt-24 pb-12">
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto">
                         {/* Header Section */}
-                        <div className="glass-card p-8 rounded-2xl mb-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden bg-white/5 border border-white/10">
+                        <div className="bg-slate-800 border border-slate-700 shadow-xl shadow-black/20 p-8 rounded-[1.5rem] mb-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
                             <div className="relative">
-                                <Avatar className="w-32 h-32 border-4 border-primary/20">
+                                <Avatar className="w-32 h-32 border-4 border-slate-700 shadow-md">
                                     <AvatarImage src={profile.profile_picture} alt={profile.name} />
-                                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
+                                    <AvatarFallback className="text-3xl bg-slate-700 text-emerald-500">
                                         {profile.name.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
                                 {profile.is_online && (
-                                    <span className="absolute bottom-2 right-2 w-5 h-5 bg-green-500 border-4 border-[#0a0a0c] rounded-full"></span>
+                                    <span className="absolute bottom-2 right-2 w-5 h-5 bg-emerald-500 border-4 border-slate-700 rounded-full"></span>
                                 )}
                             </div>
 
                             <div className="flex-1 text-center md:text-left">
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                                    <h1 className="text-3xl font-bold text-foreground">{profile.name}</h1>
-                                    <Badge variant="secondary" className="capitalize bg-primary/10 text-primary border-primary/20">{profile.role}</Badge>
-                                    {profile.is_online && <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">Online</Badge>}
+                                    <h1 className="text-3xl font-bold text-white">{profile.name}</h1>
+                                    {(profile.role === 'master1_vectors' || profile.role === 'admin') ? (
+                                        <Badge
+                                            variant="secondary"
+                                            className="capitalize bg-emerald-500/10 text-emerald-500 border-emerald-500/20 cursor-pointer hover:bg-emerald-500/20 transition-colors active:scale-95"
+                                            onClick={() => navigate('/admin')}
+                                        >
+                                            {profile.role}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="capitalize bg-emerald-500/10 text-emerald-500 border-emerald-500/20">{profile.role}</Badge>
+                                    )}
+                                    {profile.is_online && <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-none">Online</Badge>}
                                 </div>
-                                <p className="text-muted-foreground font-mono mb-4 text-sm">@{profile.username}</p>
-                                <p className="text-foreground/80 max-w-md mb-6 line-clamp-2">{profile.bio}</p>
+                                <p className="text-emerald-500/70 font-mono mb-4 text-sm font-medium">@{profile.username}</p>
+                                <p className="text-slate-300 max-w-md mb-6 line-clamp-2 leading-relaxed">{profile.bio}</p>
 
                                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-6">
-                                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-6 text-sm text-slate-400 font-medium">
                                         <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4" />
+                                            <Calendar className="w-4 h-4 text-emerald-500" />
                                             Joined {new Date(profile.joined_at).toLocaleDateString()}
                                         </div>
                                     </div>
@@ -134,7 +149,7 @@ const Profile = () => {
                                         <div className="pt-2 md:pt-0">
                                             <Button
                                                 onClick={handleChat}
-                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-mono tracking-wider text-xs px-6 h-9 rounded-full shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                                                className="bg-sky-600 hover:bg-sky-500 text-white font-mono tracking-wider text-xs px-6 h-9 rounded-full shadow-lg shadow-sky-500/20 transition-all hover:scale-105 active:scale-95 border border-sky-500"
                                             >
                                                 <MessageSquare className="w-3.5 h-3.5 mr-2" />
                                                 MESSAGE
@@ -148,39 +163,39 @@ const Profile = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {/* Left Column: Stats */}
                             <div className="md:col-span-1 space-y-6">
-                                <Card className="glass-card border-none">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <Trophy className="w-5 h-5 text-yellow-500" />
+                                <Card className="bg-slate-800 border-slate-700 shadow-xl shadow-black/20 rounded-[1.5rem] overflow-hidden">
+                                    <CardHeader className="bg-slate-700/50 border-b border-slate-700 pb-4">
+                                        <CardTitle className="text-lg flex items-center gap-2 font-bold text-white">
+                                            <Trophy className="w-5 h-5 text-emerald-500" />
                                             Overall Progress
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-6">
                                         <div className="space-y-4">
-                                            <div className="flex justify-between text-sm mb-1">
+                                            <div className="flex justify-between text-sm mb-1 font-medium text-slate-400">
                                                 <span>Mastery Level</span>
-                                                <span className="font-bold">{profile.overall_progress}%</span>
+                                                <span className="font-bold text-emerald-500">{profile.overall_progress}%</span>
                                             </div>
-                                            <Progress value={profile.overall_progress} className="h-3" />
-                                            <p className="text-xs text-muted-foreground text-center mt-2">
+                                            <Progress value={profile.overall_progress} className="h-3 bg-slate-700" indicatorClassName="bg-emerald-500" />
+                                            <p className="text-xs text-slate-500 text-center mt-2 font-medium">
                                                 Keep coding to reach 100%!
                                             </p>
                                         </div>
                                     </CardContent>
                                 </Card>
 
-                                <Card className="glass-card border-none">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <UserIcon className="w-5 h-5 text-primary" />
+                                <Card className="bg-slate-800 border-slate-700 shadow-xl shadow-slate-300/50 rounded-[1.5rem] overflow-hidden">
+                                    <CardHeader className="bg-slate-700/50 border-b border-slate-700 pb-4">
+                                        <CardTitle className="text-lg flex items-center gap-2 font-bold text-white">
+                                            <UserIcon className="w-5 h-5 text-emerald-500" />
                                             Badges
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-6">
                                         <div className="flex flex-wrap gap-2">
-                                            <Badge variant="outline" className="py-1">Early Bird</Badge>
-                                            <Badge variant="outline" className="py-1">Python Novice</Badge>
-                                            <Badge variant="outline" className="py-1">Active Learner</Badge>
+                                            <Badge variant="outline" className="py-1 border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20">Early Bird</Badge>
+                                            <Badge variant="outline" className="py-1 border-sky-500/20 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20">Python Novice</Badge>
+                                            <Badge variant="outline" className="py-1 border-amber-500/20 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20">Active Learner</Badge>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -188,31 +203,31 @@ const Profile = () => {
 
                             {/* Right Column: Modules */}
                             <div className="md:col-span-2">
-                                <Card className="glass-card border-none h-full">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <BookOpen className="w-5 h-5 text-primary" />
+                                <Card className="bg-slate-800 border-slate-700 shadow-xl shadow-black/20 h-full rounded-[1.5rem] overflow-hidden">
+                                    <CardHeader className="bg-slate-700/50 border-b border-slate-700 pb-4">
+                                        <CardTitle className="text-lg flex items-center gap-2 font-bold text-white">
+                                            <BookOpen className="w-5 h-5 text-emerald-500" />
                                             Completed Modules
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-6">
                                         <ScrollArea className="h-[400px] pr-4">
                                             {profile.modules_completed.length > 0 ? (
                                                 <div className="space-y-4">
                                                     {profile.modules_completed.map((module, index) => (
-                                                        <div key={index} className="p-4 border rounded-xl bg-muted/30 flex items-center justify-between">
+                                                        <div key={index} className="p-4 border border-slate-700 rounded-xl bg-slate-900/50 hover:bg-slate-900 hover:shadow-md transition-all flex items-center justify-between group">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                                                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-emerald-500 font-bold border border-slate-600 group-hover:scale-110 transition-transform">
                                                                     {index + 1}
                                                                 </div>
-                                                                <span className="font-semibold">{module}</span>
+                                                                <span className="font-semibold text-slate-200">{module}</span>
                                                             </div>
-                                                            <Badge className="bg-green-500/10 text-green-500">Completed</Badge>
+                                                            <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Completed</Badge>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                                                <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                                     <BookOpen className="w-12 h-12 mb-4 opacity-20" />
                                                     <p>No modules completed yet.</p>
                                                 </div>

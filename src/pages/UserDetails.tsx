@@ -25,7 +25,7 @@ interface UserDetail {
 const UserDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, isLoading: authLoading } = useAuth();
     const [user, setUser] = useState<UserDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showRaw, setShowRaw] = useState(false);
@@ -58,12 +58,14 @@ const UserDetails = () => {
     };
 
     useEffect(() => {
-        if (!currentUser || currentUser.role !== 'admin') {
-            navigate("/signin", { replace: true });
-        } else if (id) {
-            fetchUserDetail();
+        if (!authLoading) {
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'master1_vectors')) {
+                navigate("/signin", { replace: true });
+            } else if (id) {
+                fetchUserDetail();
+            }
         }
-    }, [id, currentUser, navigate]);
+    }, [id, currentUser, authLoading, navigate]);
 
     const { softDeleteUser, undoDeleteUser, isDeleted, getRemainingTime } = useSoftDelete();
     const isSoftDeleted = user ? isDeleted(user.id) : false;

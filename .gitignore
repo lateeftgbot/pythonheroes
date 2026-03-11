@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
 dist-ssr
 *.local
 
@@ -18,7 +17,7 @@ dist-ssr
 .env.*.local
 
 # Build outputs
-dist
+
 dist-ssr
 dist-native
 
@@ -29,7 +28,7 @@ __pycache__/
 env/
 build/
 develop-eggs/
-dist/
+
 downloads/
 eggs/
 .eggs/
@@ -60,3 +59,14 @@ wheels/
 *.dll
 *.so
 ngrok
+dist/
+dist_backup/
+*.txt
+!backend/requirements.txt
+*.log
+*.pdf
+users_output.json
+debug_out.txt
+debug_out_final.txt
+network_out.txt
+network_verify.txt

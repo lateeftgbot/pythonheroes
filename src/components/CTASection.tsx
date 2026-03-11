@@ -45,36 +45,40 @@ const CTASection = () => {
   };
 
   return (
-    <section className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10" />
+    <section className="py-32 relative overflow-hidden bg-white">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 via-white to-blue-50/50" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 mb-6">
-            <Sparkles className="w-4 h-4 text-secondary" />
-            <span className="font-mono text-sm text-secondary">Now Enrolling</span>
+        <div className="max-w-4xl mx-auto p-12 md:p-20 rounded-[3rem] bg-white border border-slate-100 shadow-2xl shadow-green-100/50 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-8">
+            <Sparkles className="w-4 h-4 text-green-600" />
+            <span className="text-xs font-bold uppercase tracking-wider text-green-700">Ready to start?</span>
           </div>
 
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to Become a{" "}
-            <span className="text-gradient-secondary">Python Hero</span>?
+          <h2 className="text-4xl md:text-6xl font-bold mb-8 text-slate-900 tracking-tight">
+            Become the <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent italic pr-3 tracking-normal">Python Hero</span> <br />
+            the world needs.
           </h2>
 
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Join our hands-on Python course and learn from real-world projects.
-            From zero to hero, I'll guide you every step of the way.
+          <p className="text-xl text-black mb-12 max-w-2xl mx-auto leading-relaxed">
+            Join thousands of students mastering the most versatile language on the planet.
+            Step-by-step mentorship, production-ready projects, and an elite community await.
           </p>
 
           <Link to="/payment" state={{ amount }}>
             <Button
               size="lg"
-              className="font-mono bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20"
+              className="px-10 py-8 text-xl font-bold bg-green-600 hover:bg-green-700 text-white rounded-2xl transition-all hover:scale-105 shadow-xl shadow-green-200"
               onClick={handleEnrollClick}
             >
-              Enroll Now
-              <ArrowRight className="ml-2 w-4 h-4" />
+              Start Your Journey Now
+              <ArrowRight className="ml-2 w-6 h-6" />
             </Button>
           </Link>
+
+          <p className="mt-8 text-sm font-medium text-black">
+            Secure Enrollment • Instant Access • Life-long Skills
+          </p>
         </div>
       </div>
     </section>

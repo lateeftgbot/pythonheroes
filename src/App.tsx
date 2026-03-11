@@ -23,17 +23,26 @@ import Conversations from "./pages/Conversations";
 import LearningSpace from "./pages/LearningSpace";
 import Settings from "./pages/Settings";
 import AdminMaterials from "./pages/AdminMaterials";
+import AdminApproval from "./pages/AdminApproval";
+import InfiniteSpace from "./pages/InfiniteSpace";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AdminMissions from "./pages/AdminMissions";
+import AdminCreateProblems from "./pages/AdminCreateProblems";
+import AdminBrowseProblemSets from "./pages/AdminBrowseProblemSets";
+import AITeacher from "./pages/AITeacher";
 import NotFound from "./pages/NotFound";
+import ScrollToTop from "@/components/ScrollToTop";
+import LearningPrefetcher from "./components/LearningPrefetcher";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
-
-import ScrollToTop from "@/components/ScrollToTop";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <LearningPrefetcher />
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -42,6 +51,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
             <Route path="/python-heroes" element={<PythonHeroes />} />
+            <Route path="/infinite-space" element={<InfiniteSpace />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -59,7 +69,14 @@ const App = () => (
             <Route path="/verify/:token" element={<Verify />} />
             <Route path="/tg/:chatId" element={<TelegramEntry />} />
             <Route path="/admin/materials" element={<AdminMaterials />} />
+            <Route path="/admin/approve/:token" element={<AdminApproval />} />
+            <Route path="/admin/missions" element={<AdminMissions />} />
+            <Route path="/admin/create-problems" element={<AdminCreateProblems />} />
+            <Route path="/admin/problem-sets" element={<AdminBrowseProblemSets />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/ai-teacher" element={<AITeacher />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

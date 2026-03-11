@@ -162,109 +162,133 @@ const Settings = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="min-h-screen bg-slate-900 flex flex-col">
             <Navbar />
 
             <main className="flex-1 pt-24 pb-12">
-                <div className="container mx-auto px-4 max-w-4xl">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                            <SettingsIcon className="w-6 h-6 text-primary" />
+                <div className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <SettingsIcon className="w-6 h-6 text-emerald-500" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-                            <p className="text-muted-foreground font-mono text-sm">{"// Manage your account and preferences"}</p>
+                            <p className="font-mono text-emerald-500 mb-1 text-xs font-medium tracking-wide">{"// Account Settings"}</p>
+                            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">Settings</h1>
                         </div>
                     </div>
 
-                    <Tabs defaultValue="profile" className="space-y-6">
-                        <TabsList className="bg-muted/50 p-1 border border-border/50">
-                            <TabsTrigger value="profile" className="gap-2">
+                    <Tabs defaultValue="profile" className="space-y-8">
+                        <TabsList className="bg-slate-800 p-1.5 border border-slate-700 rounded-2xl h-auto">
+                            <TabsTrigger
+                                value="profile"
+                                className="gap-2 px-6 py-2.5 rounded-xl data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 transition-all"
+                            >
                                 <User className="w-4 h-4" /> Profile
                             </TabsTrigger>
-                            <TabsTrigger value="account" className="gap-2">
+                            <TabsTrigger
+                                value="account"
+                                className="gap-2 px-6 py-2.5 rounded-xl data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 transition-all"
+                            >
                                 <Shield className="w-4 h-4" /> Account
                             </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="profile" className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                            <Card className="glass-card border-none bg-white/5">
-                                <CardHeader>
-                                    <CardTitle>Profile Information</CardTitle>
-                                    <CardDescription>Update your public profile and how others see you.</CardDescription>
+                            <Card className="bg-slate-800 border-slate-700 shadow-xl shadow-black/20 rounded-[1.5rem] overflow-hidden">
+                                <CardHeader className="bg-slate-700/30 border-b border-slate-700/50 pb-6">
+                                    <div className="flex items-baseline gap-2">
+                                        <CardTitle className="text-xl font-bold text-white">Profile Information</CardTitle>
+                                        <span className="text-[10px] font-mono text-emerald-500/70 uppercase">v1.2</span>
+                                    </div>
+                                    <CardDescription className="text-slate-400">Update your public profile and how others see you.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-8">
+                                <CardContent className="space-y-8 pt-8">
                                     {/* Profile Picture Section */}
-                                    <div className="flex flex-col md:flex-row items-center gap-6 pb-8 border-b border-white/10">
+                                    <div className="flex flex-col md:flex-row items-center gap-8 pb-8 border-b border-slate-700/50">
                                         <div className="relative group">
-                                            <Avatar className="w-24 h-24 border-2 border-primary/20 transition-all duration-300 group-hover:border-primary">
+                                            <Avatar className="w-28 h-28 border-2 border-slate-700 transition-all duration-300 group-hover:border-emerald-500/50 shadow-lg">
                                                 <AvatarImage src={profilePicture} alt={name} />
-                                                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                                                <AvatarFallback className="text-3xl bg-slate-700 text-emerald-500 font-bold">
                                                     {name?.charAt(0)}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
-                                                <Camera className="w-6 h-6 text-white" />
+                                            <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer backdrop-blur-[2px]">
+                                                <Camera className="w-7 h-7 text-white" />
                                                 <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                                             </label>
                                         </div>
-                                        <div className="text-center md:text-left">
-                                            <h4 className="font-semibold mb-1">Profile Photo</h4>
-                                            <p className="text-sm text-muted-foreground mb-3">Max size 2MB. Recommended 400x400px.</p>
-                                            <Button variant="outline" size="sm" onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}>
-                                                Change Photo
+                                        <div className="text-center md:text-left space-y-2">
+                                            <h4 className="font-bold text-white text-lg">Profile Photo</h4>
+                                            <p className="text-xs text-slate-500 max-w-[200px]">{"// Suggested 400x400px. Max 2MB."}</p>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+                                                className="mt-2 h-9 border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white font-mono text-xs uppercase tracking-wider"
+                                            >
+                                                Change Identity
                                             </Button>
                                         </div>
                                     </div>
 
-                                    <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="name">Full Name</Label>
+                                    <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-3">
+                                            <Label htmlFor="name" className="text-slate-300 font-bold text-sm ml-1 flex items-center gap-2">
+                                                <span className="text-emerald-500/50 font-mono text-xs">01.</span> Full Name
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                className="h-12 bg-slate-900/50 border-slate-700 focus:border-emerald-500/50 text-white rounded-xl px-4 transition-all"
+                                                placeholder="Enter full name"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label htmlFor="username" className="text-slate-300 font-bold text-sm ml-1 flex items-center gap-2">
+                                                <span className="text-emerald-500/50 font-mono text-xs">02.</span> Username
+                                            </Label>
+                                            <div className="relative">
                                                 <Input
-                                                    id="name"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
-                                                    className="bg-black/20 border-white/10 focus:border-primary/50"
+                                                    id="username"
+                                                    value={username}
+                                                    onChange={(e) => handleUsernameChange(e.target.value)}
+                                                    className={`h-12 bg-slate-900/50 border-slate-700 focus:border-emerald-500/50 text-white rounded-xl px-4 transition-all pr-12 ${usernameAvailable === false ? "border-red-500/50" :
+                                                        usernameAvailable === true ? "border-emerald-500/50" : ""
+                                                        }`}
+                                                    placeholder="Enter username"
                                                 />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="username">Username</Label>
-                                                <div className="relative">
-                                                    <Input
-                                                        id="username"
-                                                        value={username}
-                                                        onChange={(e) => handleUsernameChange(e.target.value)}
-                                                        className={`bg-black/20 border-white/10 focus:border-primary/50 pr-10 ${usernameAvailable === false ? "border-destructive/50" :
-                                                                usernameAvailable === true ? "border-green-500/50" : ""
-                                                            }`}
-                                                    />
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                        {isCheckingUsername ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> :
-                                                            usernameAvailable === true ? <Check className="w-4 h-4 text-green-500" /> :
-                                                                usernameAvailable === false ? <AlertCircle className="w-4 h-4 text-destructive" /> : null}
-                                                    </div>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                    {isCheckingUsername ? <Loader2 className="w-5 h-5 animate-spin text-slate-500" /> :
+                                                        usernameAvailable === true ? <Check className="w-5 h-5 text-emerald-500" /> :
+                                                            usernameAvailable === false ? <AlertCircle className="w-5 h-5 text-red-500" /> : null}
                                                 </div>
-                                                {usernameAvailable === false && (
-                                                    <p className="text-[10px] text-destructive font-mono mt-1">Username already taken</p>
-                                                )}
                                             </div>
+                                            {usernameAvailable === false && (
+                                                <p className="text-[10px] text-red-400 font-mono mt-1 ml-1 uppercase tracking-tighter">Status: Identity Collision [Username Taken]</p>
+                                            )}
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="bio">Bio</Label>
+                                        <div className="md:col-span-2 space-y-3">
+                                            <Label htmlFor="bio" className="text-slate-300 font-bold text-sm ml-1 flex items-center gap-2">
+                                                <span className="text-emerald-500/50 font-mono text-xs">03.</span> User Bio
+                                            </Label>
                                             <Textarea
                                                 id="bio"
                                                 placeholder="Tell us about yourself..."
                                                 value={bio}
                                                 onChange={(e) => setBio(e.target.value)}
-                                                className="bg-black/20 border-white/10 focus:border-primary/50 min-h-[100px]"
+                                                className="bg-slate-900/50 border-slate-700 focus:border-emerald-500/50 text-white min-h-[140px] rounded-2xl p-4 resize-none transition-all leading-relaxed"
                                             />
                                         </div>
 
-                                        <div className="flex justify-end pt-4">
-                                            <Button type="submit" disabled={isSaving || usernameAvailable === false} className="bg-primary hover:bg-primary/90 min-w-[120px]">
-                                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Save Changes"}
+                                        <div className="md:col-span-2 flex justify-end pt-4">
+                                            <Button
+                                                type="submit"
+                                                disabled={isSaving || usernameAvailable === false}
+                                                className="h-12 px-10 bg-emerald-600 hover:bg-emerald-500 text-slate-900 font-black text-sm uppercase tracking-widest rounded-xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20"
+                                            >
+                                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Sync Changes"}
                                             </Button>
                                         </div>
                                     </form>
@@ -273,35 +297,46 @@ const Settings = () => {
                         </TabsContent>
 
                         <TabsContent value="account" className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                            <Card className="glass-card border-none bg-white/5">
-                                <CardHeader>
-                                    <CardTitle>Account Settings</CardTitle>
-                                    <CardDescription>Manage your account security and authentication.</CardDescription>
+                            <Card className="bg-slate-800 border-slate-700 shadow-xl shadow-black/20 rounded-[1.5rem] overflow-hidden">
+                                <CardHeader className="bg-slate-700/30 border-b border-slate-700/50 pb-6">
+                                    <CardTitle className="text-xl font-bold text-white">Account Kernel</CardTitle>
+                                    <CardDescription className="text-slate-400">Manage security protocols and system identity.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="p-4 rounded-xl bg-black/20 border border-white/10 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-semibold">Email Address</p>
-                                                <p className="text-xs text-muted-foreground font-mono">{user?.email}</p>
+                                <CardContent className="space-y-8 pt-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-700/50 flex flex-col justify-between group hover:border-emerald-500/30 transition-all">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest font-mono">System Email</p>
+                                                <Shield className="w-4 h-4 text-emerald-500 animate-pulse" />
                                             </div>
-                                            <Shield className="w-5 h-5 text-green-500" />
+                                            <p className="text-lg text-white font-bold font-mono truncate">{user?.email}</p>
                                         </div>
-                                        <div className="p-4 rounded-xl bg-black/20 border border-white/10 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-semibold">Account Role</p>
-                                                <p className="text-xs text-muted-foreground font-mono uppercase">{user?.role}</p>
+                                        <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-700/50 flex flex-col justify-between group hover:border-blue-500/30 transition-all">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest font-mono">Kernel Role</p>
+                                                <User className="w-4 h-4 text-blue-400" />
                                             </div>
-                                            <User className="w-5 h-5 text-primary" />
+                                            <p className="text-lg text-white font-bold font-mono uppercase tracking-widest">{user?.role}</p>
                                         </div>
                                     </div>
 
-                                    <div className="pt-6 border-t border-white/10">
-                                        <h4 className="text-sm font-semibold text-destructive mb-2">Danger Zone</h4>
-                                        <p className="text-xs text-muted-foreground mb-4">Deleting your account is permanent and cannot be undone.</p>
-                                        <Button variant="destructive" size="sm" className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive hover:text-white">
-                                            Delete Account
-                                        </Button>
+                                    <div className="pt-10 border-t border-slate-700/50">
+                                        <div className="bg-red-950/20 border border-red-500/20 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                                            <div className="space-y-1">
+                                                <p className="text-white font-bold flex items-center gap-2">
+                                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                                    Termination Protocol
+                                                </p>
+                                                <p className="text-xs text-slate-500 max-w-sm">Warning: Deletion is irreversible. All training data and modules will be purged from the vector space.</p>
+                                            </div>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-xl h-10 px-8 font-bold transition-all active:scale-95 uppercase text-xs tracking-widest"
+                                            >
+                                                Purge Account
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

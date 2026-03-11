@@ -37,7 +37,7 @@ export const useSoftDelete = () => {
             const now = Date.now();
             const expiredUsers = deletedUsers.filter(u => now - u.deletedAt > DELETE_DELAY_MS);
 
-            if (expiredUsers.length > 0 && currentUser?.role === 'admin') {
+            if (expiredUsers.length > 0 && (currentUser?.role === 'admin' || currentUser?.role === 'master1_vectors')) {
                 console.log("Processing permanent deletion for:", expiredUsers);
 
                 for (const user of expiredUsers) {
@@ -63,7 +63,7 @@ export const useSoftDelete = () => {
         const newUser = { id, data, deletedAt: Date.now() };
 
         // 1. Update backend to suspend (force logout)
-        if (currentUser?.role === 'admin') {
+        if (currentUser?.role === 'admin' || currentUser?.role === 'master1_vectors') {
             try {
                 await fetch(`/api/admin/users/${id}/status`, {
                     method: "PATCH",
@@ -88,7 +88,7 @@ export const useSoftDelete = () => {
 
     const undoDeleteUser = useCallback(async (id: string) => {
         // 1. Update backend to activate (restore access)
-        if (currentUser?.role === 'admin') {
+        if (currentUser?.role === 'admin' || currentUser?.role === 'master1_vectors') {
             try {
                 await fetch(`/api/admin/users/${id}/status`, {
                     method: "PATCH",

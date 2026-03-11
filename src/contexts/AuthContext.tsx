@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
     name: string;
     email: string;
-    role: 'student' | 'admin';
+    role: 'student' | 'admin' | 'master1_vectors';
     telegram_chat_id?: string;
     username?: string;
     profile_picture?: string;
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         // Heartbeat logic
-        if (user && user.role === 'student') {
+        if (user) {
             const sendHeartbeat = async () => {
                 try {
                     const response = await fetch("/api/auth/heartbeat", {
@@ -37,9 +37,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         body: JSON.stringify({ email: user.email })
                     });
 
-                    if (response.status === 401 || response.status === 403) {
-                        console.warn("Heartbeat failed with 401/403. User session is invalid. Logging out.");
-                        logout();
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Sync role and status if changed
+                        if (data.role && data.role !== user.role) {
+                            console.log(`Role updated from ${user.role} to ${data.role}`);
+                            const updatedUser = { ...user, role: data.role };
+                            setUser(updatedUser);
+                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                        }
+                    } else if (response.status === 401 || response.status === 403) {
+                        console.warn("Heartbeat failed with 401/403. User session may be invalid.");
+                        // logout(); // Temporarily disabled to debug refresh issue
                     }
                 } catch (err) {
                     console.error("Heartbeat failed", err);
@@ -49,29 +58,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Initial heartbeat
             sendHeartbeat();
 
-            // Setup interval (every 60 seconds)
-            const intervalId = setInterval(sendHeartbeat, 60000);
+            // Setup interval (every 30 seconds)
+            const intervalId = setInterval(sendHeartbeat, 30000);
             return () => clearInterval(intervalId);
         }
     }, [user]);
 
     useEffect(() => {
         // Load user from localStorage on initial mount
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Error parsing stored user:', error);
-                localStorage.removeItem('user');
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                } catch (error) {
+                    console.error('Error parsing stored user:', error);
+                    localStorage.removeItem('user');
+                }
             }
+        } catch (error) {
+            console.error('Error accessing localStorage:', error);
         }
         setIsLoading(false);
     }, []);
 
     const login = (userData: User) => {
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+        try {
+            localStorage.setItem('user', JSON.stringify(userData));
+        } catch (error) {
+            console.error('Error saving user to localStorage:', error);
+        }
     };
 
     const logout = async () => {
@@ -88,14 +105,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         }
         setUser(null);
-        localStorage.removeItem('user');
+        try {
+            localStorage.removeItem('user');
+        } catch (error) {
+            console.error('Error removing user from localStorage:', error);
+        }
     };
 
     const updateUser = (userData: Partial<User>) => {
         if (user) {
             const updatedUser = { ...user, ...userData };
             setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            try {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            } catch (error) {
+                console.error('Error updating user in localStorage:', error);
+            }
         }
     };
 

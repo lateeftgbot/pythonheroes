@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Check, Eye, EyeOff, AlertCircle, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,11 @@ const SignUp = () => {
 
   useEffect(() => {
     if (user) {
-      navigate(user.role === 'admin' ? "/admin" : "/dashboard", { replace: true });
+      if (user.role === 'admin' || user.role === 'master1_vectors') {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     }
   }, [user, navigate]);
 
@@ -48,7 +52,6 @@ const SignUp = () => {
           telegram_chat_id // Send the chat ID if it exists
         }),
       });
-
       // Check if response is JSON before parsing
       const contentType = response.headers.get("content-type");
       let data;
@@ -87,34 +90,37 @@ const SignUp = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="min-h-screen bg-white text-black relative overflow-hidden">
         <Navbar />
 
-        {/* Background Elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background z-0"></div>
+        <main className="pt-32 pb-24 relative z-10">
+          {/* Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-[600px] overflow-hidden pointer-events-none -mt-32">
+            <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-blue-50 rounded-full blur-[120px] opacity-60" />
+            <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] bg-green-50 rounded-full blur-[120px] opacity-60" />
+          </div>
 
-        <main className="pt-24 pb-16 flex items-center justify-center min-h-screen relative z-10">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-md mx-auto">
-              <div className="glass-card rounded-2xl p-8 border border-border text-center shadow-2xl relative overflow-hidden">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl blur opacity-30"></div>
+              <div className="bg-white rounded-[2.5rem] p-12 border border-slate-100 shadow-2xl shadow-blue-100/50 text-center relative overflow-hidden">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/20 shadow-lg shadow-primary/10">
-                    <Mail className="w-10 h-10 text-primary animate-pulse" />
+                  <div className="w-20 h-20 rounded-[2rem] bg-blue-50 flex items-center justify-center mx-auto mb-8 border border-blue-100 shadow-lg shadow-blue-50">
+                    <Mail className="w-10 h-10 text-blue-600" />
                   </div>
-                  <h2 className="text-3xl font-bold mb-4 tracking-tight">Check your Inbox</h2>
-                  <p className="text-muted-foreground mb-8 text-lg">
-                    We've sent a verification link to <br /><span className="font-semibold text-foreground bg-primary/10 px-2 py-1 rounded">{email}</span>.
+                  <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Check your <span className="text-blue-600">Inbox</span></h2>
+                  <p className="text-slate-500 mb-10 text-lg font-medium">
+                    We've sent a verification link to <br /><span className="font-bold text-slate-900 bg-blue-50 px-3 py-1.5 rounded-xl">{email}</span>.
                   </p>
-                  <div className="p-4 bg-muted/50 rounded-lg mb-8 border border-border text-left">
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-semibold text-primary">Requirement:</span> Click the link in the email to activate your account.
-                      <br />
-                      <span className="text-destructive font-semibold">Note:</span> The link will <span className="underline">expire in 10 minutes</span>. If not used by then, your registration will be cleared and you'll need to sign up again.
+                  <div className="p-6 bg-slate-50 rounded-[2rem] mb-10 border border-slate-100 text-left">
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      <span className="font-black text-blue-600 uppercase tracking-widest text-[10px] block mb-2">Requirement:</span>
+                      Click the link in the email to activate your account.
+                      <br /><br />
+                      <span className="text-red-600 font-bold">Note:</span> The link will <span className="underline">expire in 10 minutes</span>. If not used by then, you'll need to sign up again.
                     </p>
                   </div>
                   <Link to="/signin">
-                    <Button size="lg" className="w-full h-11 font-mono font-bold text-base bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20">
+                    <Button size="lg" className="w-full h-14 font-black text-sm uppercase tracking-widest bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-100 transition-all">
                       Proceed to Login
                     </Button>
                   </Link>
@@ -129,40 +135,39 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-white text-black relative overflow-hidden">
       <Navbar />
 
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background z-0"></div>
-      <div className="absolute top-1/4 -right-20 w-72 h-72 bg-secondary/20 rounded-full blur-3xl opacity-20 animate-pulse z-0"></div>
-      <div className="absolute bottom-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-20 animate-pulse delay-1000 z-0"></div>
+      <main className="pt-32 pb-24 relative z-10">
+        {/* Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-[600px] overflow-hidden pointer-events-none -mt-32">
+          <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-blue-50 rounded-full blur-[120px] opacity-60" />
+          <div className="absolute top-[20%] right-[-10%] w-[45%] h-[45%] bg-green-50 rounded-full blur-[120px] opacity-60" />
+        </div>
 
-      <main className="pt-24 pb-16 flex items-center justify-center min-h-screen relative z-10">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-lg mx-auto">
-            <div className="glass-card rounded-2xl p-8 border border-border shadow-2xl relative overflow-hidden group bg-black">
-              {/* Card Glow Effect */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 border border-green-500 shadow-2xl shadow-blue-100/50 relative overflow-hidden group">
               <div className="relative">
                 {/* Header */}
-                <div className="text-center mb-8">
-                  <div className="inline-block px-3 py-1 mb-3 text-xs font-mono text-primary bg-primary/10 rounded-full border border-primary/20">
-                    {"// Join Python Heroes"}
+                <div className="text-center mb-10">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-blue-50 border border-blue-100 shadow-sm">
+                    <Zap className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="font-bold text-[10px] text-black tracking-widest uppercase">Join Python Heroes</span>
                   </div>
-                  <h1 className="text-3xl font-bold text-foreground mb-2 tracking-tight">Create Account</h1>
-                  <p className="text-muted-foreground text-sm mb-6">
+                  <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Create <span className="text-blue-600">Account</span></h1>
+                  <p className="text-slate-500 text-sm font-medium mb-8">
                     Sign up to enroll in Python Heroes
                   </p>
 
                   {/* Compact Benefits */}
-                  <div className="flex flex-col gap-y-2 text-xs text-muted-foreground bg-black/20 p-4 rounded-lg border border-white/5 w-full items-start">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-600 bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 w-full">
                     {benefits.map((benefit, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                          <Check className="w-2.5 h-2.5 text-primary" />
+                      <div key={index} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-green-50 flex items-center justify-center shrink-0 border border-green-100">
+                          <Check className="w-3 h-3 text-green-600 font-black" />
                         </div>
-                        <span className="text-left">{benefit}</span>
+                        <span className="text-left font-bold">{benefit}</span>
                       </div>
                     ))}
                   </div>
@@ -189,7 +194,7 @@ const SignUp = () => {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-foreground font-medium">
+                    <Label htmlFor="name" className="text-slate-900 font-medium">
                       Full Name
                     </Label>
                     <div className="relative group/input">
@@ -202,14 +207,14 @@ const SignUp = () => {
                         placeholder="Basiru Lateef"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="pl-10 h-11 bg-muted/50 border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                        className="pl-10 h-11 bg-white border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all font-medium"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground font-medium">
+                    <Label htmlFor="email" className="text-slate-900 font-medium">
                       Email Address
                     </Label>
                     <div className="relative group/input">
@@ -223,8 +228,8 @@ const SignUp = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className={cn(
-                          "pl-10 h-11 bg-muted/50 border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all",
-                          error && error.toLowerCase().includes('email') && "bg-destructive/10 border-destructive/50 ring-destructive/20 text-destructive"
+                          "pl-10 h-11 bg-white border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all font-medium",
+                          error && error.toLowerCase().includes('email') && "bg-red-50 border-red-200 ring-red-100 text-red-600"
                         )}
                         required
                       />
@@ -232,7 +237,7 @@ const SignUp = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground font-medium">
+                    <Label htmlFor="password" className="text-slate-900 font-medium">
                       Password
                     </Label>
                     <div className="relative group/input">
@@ -245,7 +250,7 @@ const SignUp = () => {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                        className="pl-10 pr-10 h-11 bg-white border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all font-medium"
                         required
                         minLength={8}
                       />
@@ -269,11 +274,11 @@ const SignUp = () => {
                   <Button
                     type="submit"
                     size="lg"
-                    className="w-full h-11 font-mono font-bold text-base bg-green-600 hover:bg-green-700 transition-opacity text-white shadow-lg shadow-green-900/20"
+                    className="w-full h-14 font-black text-sm uppercase tracking-widest bg-blue-600 hover:bg-blue-700 transition-all text-white rounded-2xl shadow-xl shadow-blue-100 hover:scale-[1.02] active:scale-[0.98]"
                     disabled={isLoading}
                   >
                     {isLoading ? "Creating account..." : "Create Account"}
-                    {!isLoading && <ArrowRight className="ml-2 w-4 h-4" />}
+                    {!isLoading && <ArrowRight className="ml-2 w-5 h-5" />}
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground">
@@ -291,11 +296,11 @@ const SignUp = () => {
                 </div>
 
                 {/* Developer Note */}
-                <div className="mt-8 p-3 rounded-md bg-black/40 border border-white/5 backdrop-blur-md">
-                  <div className="flex items-start gap-2 text-xs font-mono opacity-60 hover:opacity-100 transition-opacity">
-                    <div className="mt-0.5 text-secondary">{"//"}</div>
-                    <div className="text-muted-foreground">
-                      <span className="text-blue-400">POST</span> /api/auth/signup
+                <div className="mt-10 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-start gap-2 text-[10px] font-mono opacity-50">
+                    <div className="mt-0.5 text-blue-600">{"//"}</div>
+                    <div className="text-slate-600">
+                      <span className="text-blue-600 font-bold">POST</span> /api/auth/signup
                     </div>
                   </div>
                 </div>

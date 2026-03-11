@@ -3,84 +3,69 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-border bg-card/50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-black border-t border-slate-800">
+      <div className="container mx-auto px-4 py-20">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
-          <div className="md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Code className="w-5 h-5 text-primary" />
+          <div className="md:col-span-2 flex flex-col items-center text-center">
+            <Link to="/" className="flex items-center gap-3 mb-6 group">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Code className="w-6 h-6 text-green-500" />
               </div>
-              <span className="font-mono font-bold text-lg">
-                <span className="text-primary">Vectors</span>
-                <span className="text-foreground">.dev</span>
+              <span className="font-bold text-2xl tracking-tight text-white">
+                Vectors<span className="text-green-500">.dev</span>
               </span>
             </Link>
-            <p className="text-muted-foreground text-sm max-w-md">
-              Python developer, automotive engineer, and educator. Building solutions and teaching the next generation of Python developers at Python Heroes.
+
+            <p className="text-slate-300 text-lg max-w-md leading-relaxed">
+              Empowering the next generation of Python developers through world-class courses in AI,
+              automation, and engineering architecture.
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-mono font-semibold text-primary mb-4">{"// Links"}</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link to="/python-heroes" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Python Heroes
-                </Link>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact */}
-          <div>
-            <h4 className="font-mono font-semibold text-primary mb-4">{"// Connect"}</h4>
-            <div className="flex gap-3">
-              <a
-                href="mailto:lateefolayinka97@gmail.com"
-                className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-              >
-                <Mail className="w-5 h-5" />
-              </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a
-                href="https://linkedin.com/in/lativectors"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
+          <div className="flex flex-col items-center text-center">
+            <h4 className="font-bold text-green-500 mb-6 uppercase tracking-widest text-sm">Connect</h4>
+            <div className="flex gap-4">
+              {[
+                { icon: Mail, href: "mailto:lateefolayinka97@gmail.com" },
+                { icon: Github, href: "https://github.com" },
+                { icon: Linkedin, href: "https://linkedin.com/in/lativectors" }
+              ].map((social, i) => (
+                <a
+                  key={i}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-green-400 hover:bg-white/10 transition-all"
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
             </div>
           </div>
+
+          {/* Python Heroes */}
+          <div className="flex flex-col items-center text-center">
+            <h4 className="font-bold text-green-500 mb-6 uppercase tracking-widest text-sm">Platform</h4>
+            <Link to="/python-heroes" className="group flex items-center gap-2 text-slate-300 hover:text-green-400 transition-colors font-medium">
+              Python Heroes
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border">
-          <p className="text-center text-sm text-muted-foreground font-mono">
-            <span className="text-primary">$</span> © 2025 Basiru Lateef Olayinka. All rights reserved.
+        <div className="mt-20 pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-sm text-slate-400 font-medium">
+            © 2026 Python Heroes. All rights reserved.
           </p>
+          <div className="flex gap-8 text-sm font-medium text-slate-400">
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
+          </div>
         </div>
       </div>
-    </footer >
+    </footer>
   );
 };
 

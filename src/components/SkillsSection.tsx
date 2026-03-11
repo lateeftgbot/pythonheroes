@@ -1,65 +1,74 @@
-import { Bot, Car, Calculator, Database, Gamepad2, Globe } from "lucide-react";
+import { Bot, MessageSquare, Globe, GraduationCap, Trophy, Code2 } from "lucide-react";
 import SkillCard from "./SkillCard";
 
 const SkillsSection = () => {
   const skills = [
     {
-      icon: Database,
-      title: "Data Science",
-      description: "Analyzing data, building ML models, and creating insights with Python's powerful ecosystem.",
+      icon: GraduationCap,
+      title: "Learning with progress",
+      description: "Intuitive tracking systems and data-driven curriculum milestones that visualize your journey to technical mastery.",
       color: "green" as const,
+      link: "/learning-space",
     },
     {
-      icon: Bot,
-      title: "Telegram Bots",
-      description: "Building intelligent bots for automation, customer service, and community management.",
+      icon: MessageSquare,
+      title: "Chat integration",
+      description: "Seamless real-time communication within professional chat architectures to collaborate with peers and mentors.",
       color: "blue" as const,
+      link: "/chat-room",
     },
     {
       icon: Globe,
-      title: "Web Backend",
-      description: "Creating robust APIs and web services using Flask, FastAPI, and Django.",
+      title: "Global connection",
+      description: "Networking with a high-performance community of engineers and innovators from every corner of the world.",
       color: "purple" as const,
+      link: "/infinite-space",
     },
     {
-      icon: Gamepad2,
-      title: "2D Games",
-      description: "Developing fun and interactive games using Pygame and other Python frameworks.",
+      icon: GraduationCap,
+      title: "Practice for Universities",
+      description: "Academic-grade programming challenges specifically designed for university students to excel in their coursework.",
       color: "amber" as const,
+      link: "/python-heroes",
     },
     {
-      icon: Car,
-      title: "Automotive Service",
-      description: "Engineering expertise in automotive systems, maintenance, and design.",
+      icon: Trophy,
+      title: "Coding challenges",
+      description: "Intense, real-world bug-fixing and algorithm optimization tasks in a high-stakes competitive environment.",
       color: "green" as const,
+      link: "/infinite-space",
     },
     {
-      icon: Calculator,
-      title: "Math Tutoring",
-      description: "Teaching mathematics concepts from basic algebra to advanced calculus.",
+      icon: Code2,
+      title: "Code editor support",
+      description: "Integrated development environment with full syntax highlighting and professional tooling for elite coding.",
       color: "blue" as const,
+      link: "/learning-space",
     },
   ];
 
   return (
-    <section className="py-24 bg-[#dddddd]">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <p className="font-mono text-primary mb-2">{"// What I Do"}</p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Skills & <span className="text-gradient-primary">Expertise</span>
+    <section className="py-32 bg-white relative overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+            The features of <span className="text-green-600">Python Heroes</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            From writing Python scripts to designing machine parts, here's what I bring to the table.
+          <p className="text-lg text-black max-w-2xl mx-auto font-medium">
+            Explore the sophisticated ecosystem built to transform passionate learners into
+            world-class Python engineers and architects.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {skills.map((skill, index) => (
             <SkillCard key={index} {...skill} />
           ))}
         </div>
       </div>
+
+      {/* Decorative side element */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-64 h-64 bg-green-50 rounded-full blur-[100px] opacity-20" />
     </section>
   );
 };

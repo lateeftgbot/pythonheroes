@@ -2,7 +2,7 @@ import requests
 import uuid
 
 def test_full_flow():
-    base_url = "http://localhost:5000/api/auth"
+    base_url = "http://localhost:5001/api/auth"
     email = f"test_{uuid.uuid4().hex[:6]}@example.com"
     password = "password123"
     name = "Test User"
