@@ -6,3 +6,5 @@ pymongo[srv]
 dnspython
 python-dotenv
 google-genai
+certifi
+itsdangerous
