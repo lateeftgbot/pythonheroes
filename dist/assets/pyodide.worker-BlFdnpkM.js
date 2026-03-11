@@ -1,0 +1,4 @@
+(function(){"use strict";let a=!1,e=null;async function d(){try{const{loadPyodide:o}=await import("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.mjs");e=await o({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.25.0/full/"}),await e.loadPackage(["micropip"]),a=!0,postMessage({type:"loaded"})}catch(o){postMessage({type:"error",error:String(o)})}}d(),self.onmessage=async o=>{const{type:p,code:n,id:t}=o.data;if(p==="run"){if(!a){postMessage({type:"error",error:"Pyodide not loaded yet",id:t});return}try{e.setStdout({batched:r=>{postMessage({type:"output",output:r+`
+`,id:t})}}),e.setStderr({batched:r=>{postMessage({type:"output",output:r+`
+`,id:t})}});const s=await e.runPythonAsync(n);s!=null&&postMessage({type:"output",output:String(s)+`
+`,id:t}),postMessage({type:"finished",id:t})}catch(s){postMessage({type:"error",error:String(s),id:t})}}}})();

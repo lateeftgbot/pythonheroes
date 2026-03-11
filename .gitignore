@@ -59,8 +59,6 @@ wheels/
 *.dll
 *.so
 ngrok
-dist/
-dist_backup/
 *.txt
 !backend/requirements.txt
 *.log
