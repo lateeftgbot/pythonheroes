@@ -23,14 +23,16 @@ import {
     Check,
     Loader2,
     Trophy,
-    BookOpen
+    BookOpen,
+    LayoutDashboard,
+    User
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -51,6 +53,7 @@ type ChallengeMode = 'solo' | 'group';
 // Challenges are now loaded from API to state
 const InfiniteSpace = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<Tab>('problems');
     const [challengeType, setChallengeType] = useState<'solutions' | 'typing'>('solutions');
     const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All');
@@ -71,12 +74,18 @@ const InfiniteSpace = () => {
     const [currentPvPIndex, setCurrentPvPIndex] = useState(0);
     const [pvpScore, setPvpScore] = useState(0);
     const [pvpOpponentScore, setPvpOpponentScore] = useState(0);
+    const [pvpPointsAwarded, setPvpPointsAwarded] = useState(0);
     const [pvpPrediction, setPvpPrediction] = useState<number | string | null>(null);
     const [showPvPFeedback, setShowPvPFeedback] = useState(false);
     const [pvpTimer, setPvpTimer] = useState(100);
     const [isPvPTimerPaused, setIsPvPTimerPaused] = useState(false);
     const [pvpStartCountdown, setPvpStartCountdown] = useState(3);
     const [isPvPCountingDown, setIsPvPCountingDown] = useState(true);
+    const [isPvPSyncing, setIsPvPSyncing] = useState(false);
+
+    // Matchmaking Notification States
+    const [showMatchFoundNotification, setShowMatchFoundNotification] = useState(false);
+    const [opponentInfo, setOpponentInfo] = useState<{ name: string } | null>(null);
 
     const shuffleArray = (array: any[]) => {
         const shuffled = [...array];
@@ -174,6 +183,58 @@ const InfiniteSpace = () => {
         </div>
     );
 
+    // Match Found Overlay
+    const MatchFoundOverlay = ({ opponentName }: { opponentName: string }) => (
+        <div className="fixed inset-0 z-[120] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-gradient-to-b from-[#0a0a0a] to-black rounded-[2.5rem] border border-primary/30 shadow-[0_0_80px_rgba(34,197,94,0.15)] p-12 text-center space-y-8 animate-in zoom-in-90 fade-in duration-500 text-white relative overflow-hidden">
+                <button
+                    onClick={handleQuitPvP}
+                    className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-colors z-[130]"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/10 rounded-full blur-[60px]" />
+                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-secondary/10 rounded-full blur-[60px]" />
+
+                <div className="relative">
+                    <div className="mx-auto w-28 h-28 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center relative group">
+                        <div className="absolute inset-0 bg-primary/5 rounded-3xl animate-ping opacity-20" />
+                        <Swords className="w-12 h-12 text-primary animate-bounce-slow" />
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-secondary flex items-center justify-center border-4 border-[#0a0a0a] animate-in zoom-in-50 delay-300">
+                            <Zap className="w-4 h-4 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4 relative">
+                    <div className="space-y-1">
+                        <h3 className="text-sm font-mono text-primary uppercase tracking-[0.4em] font-bold">Match Confirmed</h3>
+                        <h2 className="text-4xl font-black font-mono tracking-tighter">Congratulations!</h2>
+                    </div>
+
+                    <div className="py-6 px-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+                        <p className="text-slate-400 text-xs font-mono mb-2 uppercase tracking-widest">You are matched with</p>
+                        <p className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                            {opponentName}
+                        </p>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 font-mono italic animate-pulse">
+                        Synchronizing battle sectors... Get ready!
+                    </p>
+                </div>
+
+                <div className="pt-2">
+                    <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary animate-progress-fast" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     // PvP Logic
     useEffect(() => {
         let interval: any;
@@ -181,23 +242,36 @@ const InfiniteSpace = () => {
             interval = setInterval(async () => {
                 if (!user) return;
                 try {
-                    const response = await fetch(`/api/learning/pvp/status?email=${user.email}`);
+                    const response = await fetch(`/api/learning/pvp/status?email=${encodeURIComponent(user.email.toLowerCase())}`);
                     const data = await response.json();
                     if (data.status === 'matched') {
-                        // Only initialize if we're moving from 'searching' to 'matched'
-                        if (pvpStatus === 'searching') {
-                            setIsPvPActive(true);
-                            setCurrentPvPIndex(0);
-                            setPvpScore(0);
-                            setPvpStartCountdown(3);
-                            setIsPvPCountingDown(true);
-                            setPvpStatus('matched'); // Set it here so the next poll won't re-init
+                        // Only initialize if we're moving from 'searching' to 'matched' AND not already syncing
+                        if (pvpStatus === 'searching' && !isPvPSyncing) {
+                            setIsPvPSyncing(true);
+                            const opponent = data.match.player1.email.toLowerCase() === user.email.toLowerCase()
+                                ? data.match.player2
+                                : data.match.player1;
+
+                            setOpponentInfo({ name: opponent.name });
+                            setShowMatchFoundNotification(true);
+
+                            // Delay the start of the game to show the "Matched" card
+                            setTimeout(() => {
+                                setShowMatchFoundNotification(false);
+                                setIsPvPActive(true);
+                                setCurrentPvPIndex(0);
+                                setPvpScore(0);
+                                setPvpStartCountdown(3);
+                                setIsPvPCountingDown(true);
+                                setPvpStatus('matched');
+                                setIsPvPSyncing(false);
+                            }, 4000);
                         }
 
                         setPvpMatch(data.match);
 
                         // Sync opponent score
-                        if (data.match.player1.email === user.email) {
+                        if (data.match.player1.email.toLowerCase() === user.email.toLowerCase()) {
                             setPvpOpponentScore(data.match.player2.score);
                         } else {
                             setPvpOpponentScore(data.match.player1.score);
@@ -219,26 +293,49 @@ const InfiniteSpace = () => {
             toast.error("Please login to play PvP.");
             return;
         }
+        setPvpMatch(null);
+        // Force-clear any hanging session on server before joining
+        try {
+            await fetch('/api/learning/pvp/quit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email.toLowerCase() })
+            });
+        } catch (e) { /* ignore */ }
+
         try {
             const response = await fetch('/api/learning/pvp/join', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    email: user.email,
+                    email: user.email.toLowerCase(),
                     name: user.name,
                     difficulty: difficulty === 'All' ? 'Beginner' : difficulty
                 })
             });
             const data = await response.json();
-            if (data.status === 'matched') {
+            if (data.status === 'matched' && !isPvPSyncing) {
+                setIsPvPSyncing(true);
+                const opponent = data.match.player1.email.toLowerCase() === user.email.toLowerCase()
+                    ? data.match.player2
+                    : data.match.player1;
+
+                setOpponentInfo({ name: opponent.name });
+                setShowMatchFoundNotification(true);
                 setPvpMatch(data.match);
-                setPvpStatus('matched');
-                setIsPvPActive(true);
-                setCurrentPvPIndex(0);
-                setPvpScore(0);
-                // Start sequence
-                setPvpStartCountdown(3);
-                setIsPvPCountingDown(true);
+
+                // Delay the start of the game
+                setTimeout(() => {
+                    setShowMatchFoundNotification(false);
+                    setPvpStatus('matched');
+                    setIsPvPActive(true);
+                    setCurrentPvPIndex(0);
+                    setPvpScore(0);
+                    // Start sequence
+                    setPvpStartCountdown(3);
+                    setIsPvPCountingDown(true);
+                    setIsPvPSyncing(false);
+                }, 4000);
             } else {
                 setPvpStatus('searching');
             }
@@ -252,12 +349,13 @@ const InfiniteSpace = () => {
             await fetch('/api/learning/pvp/quit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email })
+                body: JSON.stringify({ email: user.email.toLowerCase() })
             });
         }
         setPvpStatus('idle');
         setPvpMatch(null);
         setIsPvPActive(false);
+        setIsPvPSyncing(false);
     };
 
     const handlePvPSelection = async (prediction: number | string) => {
@@ -267,9 +365,14 @@ const InfiniteSpace = () => {
         setIsPvPTimerPaused(true);
 
         let newScore = pvpScore;
+        let pointsAwarded = 0;
         if (prediction === pvpMatch.challenges[currentPvPIndex]?.correct) {
-            newScore += 10;
+            pointsAwarded = Math.max(1, Math.floor(pvpTimer));
+            newScore += pointsAwarded;
             setPvpScore(newScore);
+            setPvpPointsAwarded(pointsAwarded);
+        } else {
+            setPvpPointsAwarded(0);
         }
 
         // Update score on backend
@@ -279,7 +382,7 @@ const InfiniteSpace = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     match_id: pvpMatch.match_id,
-                    email: user.email,
+                    email: user.email.toLowerCase(),
                     score: newScore
                 })
             });
@@ -462,67 +565,91 @@ const InfiniteSpace = () => {
     };
 
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isBattleActive && isCountingDown && startCountdown > 0) {
+        let interval: NodeJS.Timeout | null = null;
+        if (isBattleActive && isCountingDown) {
             interval = setInterval(() => {
-                setStartCountdown((prev) => prev - 1);
-            }, 1000);
-        } else if (isBattleActive && isCountingDown && startCountdown === 0) {
-            setIsCountingDown(false);
-        }
-        return () => clearInterval(interval);
-    }, [isBattleActive, isCountingDown, startCountdown]);
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isBattleActive && !isTimerPaused && !isCountingDown && battleTimer > 0) {
-            interval = setInterval(() => {
-                setBattleTimer((prev) => Math.max(0, prev - (10 / selectedTimeLimit)));
+                setStartCountdown((prev) => {
+                    if (prev <= 0.1) {
+                        setIsCountingDown(false);
+                        return 0;
+                    }
+                    return parseFloat((prev - 0.1).toFixed(1));
+                });
             }, 100);
         }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isBattleActive, isCountingDown]);
 
-        if (battleTimer === 0 && !showBattleFeedback && !isCountingDown) {
-            // Time's up logic
-            setBattlePrediction(null); // Explicitly null to show fail
-            setShowBattleFeedback(true);
-            setIsTimerPaused(true);
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+        if (isBattleActive && !isTimerPaused && !isCountingDown) {
+            interval = setInterval(() => {
+                setBattleTimer((prev) => {
+                    const decrement = 10 / selectedTimeLimit;
+                    const nextValue = Math.max(0, prev - decrement);
+                    if (nextValue === 0) {
+                        // Delay the feedback slightly to ensure user sees 0.0s
+                        setTimeout(() => {
+                            setBattlePrediction(null);
+                            setShowBattleFeedback(true);
+                            setIsTimerPaused(true);
+                        }, 50);
+                    }
+                    return nextValue;
+                });
+            }, 100);
         }
-
-        return () => clearInterval(interval);
-    }, [isBattleActive, isTimerPaused, battleTimer, showBattleFeedback, isCountingDown]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isBattleActive, isTimerPaused, isCountingDown, selectedTimeLimit]);
 
     // PvP Countdown Decrementer
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isPvPActive && isPvPCountingDown && pvpStartCountdown > 0) {
+        let interval: NodeJS.Timeout | null = null;
+        if (isPvPActive && isPvPCountingDown) {
             interval = setInterval(() => {
-                setPvpStartCountdown((prev) => prev - 1);
-            }, 1000);
-        } else if (isPvPActive && isPvPCountingDown && pvpStartCountdown === 0) {
-            setIsPvPCountingDown(false);
-            setPvpTimer(100);
+                setPvpStartCountdown((prev) => {
+                    if (prev <= 0.1) {
+                        setIsPvPCountingDown(false);
+                        setPvpTimer(100);
+                        return 0;
+                    }
+                    return parseFloat((prev - 0.1).toFixed(1));
+                });
+            }, 100);
         }
-        return () => clearInterval(interval);
-    }, [isPvPActive, isPvPCountingDown, pvpStartCountdown]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isPvPActive, isPvPCountingDown]);
 
     // PvP Timer Decay Logic
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isPvPActive && !isPvPTimerPaused && !isPvPCountingDown && pvpTimer > 0) {
+        let interval: NodeJS.Timeout | null = null;
+        if (isPvPActive && !isPvPTimerPaused && !isPvPCountingDown) {
+            const timeLimit = 10; // Fixed 10s for PvP
             interval = setInterval(() => {
-                const timeLimit = difficulty === 'Beginner' ? 30 : 20;
-                setPvpTimer((prev) => Math.max(0, prev - (10 / timeLimit)));
+                setPvpTimer((prev) => {
+                    const decrement = 1; // 1 point per 0.1s (10 points per second)
+                    const nextValue = Math.max(0, prev - decrement);
+                    if (nextValue === 0) {
+                        setTimeout(() => {
+                            setPvpPrediction(null);
+                            setShowPvPFeedback(true);
+                            setIsPvPTimerPaused(true);
+                        }, 50);
+                    }
+                    return nextValue;
+                });
             }, 100);
         }
-
-        if (pvpTimer === 0 && !showPvPFeedback && !isPvPCountingDown && isPvPActive) {
-            setPvpPrediction(null);
-            setShowPvPFeedback(true);
-            setIsPvPTimerPaused(true);
-        }
-
-        return () => clearInterval(interval);
-    }, [isPvPActive, isPvPTimerPaused, isPvPCountingDown, pvpTimer, difficulty, showPvPFeedback]);
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isPvPActive, isPvPTimerPaused, isPvPCountingDown, difficulty]);
 
     const handleBattleSelection = (prediction: number | string) => {
         setBattlePrediction(prediction);
@@ -547,6 +674,20 @@ const InfiniteSpace = () => {
                 description: `Final Score: ${battleScore} points.`,
             });
             setIsBattleActive(false);
+
+            // Save results to backend
+            if (user?.email) {
+                fetch('/api/learning/solo/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: user.email.toLowerCase(),
+                        score: battleScore,
+                        difficulty: difficulty === 'All' ? 'Mixed' : difficulty,
+                        challenges_count: battleChallenges.length
+                    })
+                }).catch(err => console.error("Failed to save solo battle:", err));
+            }
         }
     };
 
@@ -612,6 +753,7 @@ const InfiniteSpace = () => {
             </div>
 
             {isBattleLoading && <BattleLoadingOverlay />}
+            {showMatchFoundNotification && opponentInfo && <MatchFoundOverlay opponentName={opponentInfo.name} />}
 
             <main className="flex-1 flex flex-col container mx-auto px-6 md:px-4 pt-[83px] pb-[3px] relative z-10 overflow-hidden">
                 {/* Header Section */}
@@ -1173,7 +1315,7 @@ const InfiniteSpace = () => {
                                                         "text-[10px] font-mono font-bold w-12 text-right",
                                                         isCountingDown ? "text-primary" : battleTimer > 50 ? "text-primary" : battleTimer > 20 ? "text-yellow-500" : "text-red-500 animate-pulse"
                                                     )}>
-                                                        {isCountingDown ? "3.0s" : `${(battleTimer / 10).toFixed(1)}s`}
+                                                        {isCountingDown ? `${Math.ceil(startCountdown)}s` : `${(battleTimer * selectedTimeLimit / 100).toFixed(1)}s`}
                                                     </span>
                                                 </div>
 
@@ -1203,7 +1345,7 @@ const InfiniteSpace = () => {
                                                             <div className="relative">
                                                                 <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
                                                                 <span className="text-8xl font-black font-mono text-primary drop-shadow-[0_0_20px_rgba(34,197,94,0.3)] animate-in zoom-in-50 duration-500">
-                                                                    {startCountdown > 0 ? startCountdown : "GO!"}
+                                                                    {startCountdown > 0 ? Math.ceil(startCountdown) : "GO!"}
                                                                 </span>
                                                             </div>
                                                             <p className="text-sm font-mono text-white/60 tracking-[0.4em] uppercase">Analyze Logic...</p>
@@ -1220,7 +1362,7 @@ const InfiniteSpace = () => {
                                                         Anticipated Output Result
                                                     </h4>
                                                     <h2 className="text-base sm:text-2xl font-bold font-mono tracking-tighter mb-1">
-                                                        {isCountingDown ? startCountdown : battleChallenges[currentBattleIndex]?.title}
+                                                        {isCountingDown ? Math.ceil(startCountdown) : battleChallenges[currentBattleIndex]?.title}
                                                     </h2>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         {(battleChallenges[currentBattleIndex]?.options || []).map((option, idx) => (
@@ -1452,389 +1594,6 @@ const InfiniteSpace = () => {
                                         </div>
                                     </div>
                                 )}
-
-                                {/* PvP Searching Overlay */}
-                                {pvpStatus === 'searching' && (
-                                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                                        <div className="max-w-md w-full bg-[#0a0a0a] rounded-3xl border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
-                                            <div className="relative mx-auto w-24 h-24">
-                                                <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                                                <div className="absolute inset-4 rounded-full bg-primary/10 flex items-center justify-center">
-                                                    <Globe className="w-8 h-8 text-primary animate-pulse" />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <h3 className="text-2xl font-bold font-mono tracking-tighter">Searching for Opponent...</h3>
-                                                <p className="text-sm text-slate-400 font-mono italic">Looking for a challenger in the global arena</p>
-                                            </div>
-                                            <div className="flex flex-col gap-3">
-                                                <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-primary/60 uppercase tracking-[0.2em]">
-                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                    Syncing Neural Uplink
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    onClick={handleQuitPvP}
-                                                    className="text-red-500 hover:text-red-400 hover:bg-red-500/10 font-mono text-xs"
-                                                >
-                                                    Cancel Search
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* PvP Battle Arena */}
-                                {isPvPActive && pvpMatch && (
-                                    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300 text-white">
-                                        {/* ─── Scoreboard Header ─── */}
-                                        <div className="flex items-center justify-between px-6 py-2 border-b border-white/5 bg-[#0a0a0a]">
-                                            {/* Player (You) — Left */}
-                                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary font-mono shrink-0">
-                                                    {user?.name?.[0]?.toUpperCase() ?? "?"}
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-[8px] font-mono text-primary/60 uppercase tracking-wider">Player</span>
-                                                    <span className="font-bold font-mono text-sm truncate text-white">{user?.name ?? "You"}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Score — Center */}
-                                            <div className="flex flex-col items-center mx-4 shrink-0">
-                                                <div className="flex items-center gap-3 px-4 py-1 rounded-xl bg-white/5 border border-white/10 shadow-inner">
-                                                    <span className="text-2xl font-black font-mono text-primary tabular-nums tracking-tighter">{pvpScore}</span>
-                                                    <span className="text-xl font-bold text-slate-500 font-mono">:</span>
-                                                    <span className="text-2xl font-black font-mono text-secondary tabular-nums tracking-tighter">{pvpOpponentScore}</span>
-                                                </div>
-                                                <span className="text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-0.5">Score</span>
-                                            </div>
-
-                                            {/* Opponent — Right */}
-                                            <div className="flex items-center gap-3 min-w-0 flex-1 justify-end">
-                                                <div className="flex flex-col items-end min-w-0">
-                                                    <span className="text-[8px] font-mono text-secondary/60 uppercase tracking-wider">Opponent</span>
-                                                    <span className="font-bold font-mono text-sm truncate text-white text-right">
-                                                        {pvpMatch.player1.email === user?.email ? pvpMatch.player2.name : pvpMatch.player1.name}
-                                                    </span>
-                                                </div>
-                                                <div className="w-8 h-8 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-xs font-bold text-secondary font-mono shrink-0">
-                                                    {(pvpMatch.player1.email === user?.email ? pvpMatch.player2.name : pvpMatch.player1.name)?.[0]?.toUpperCase() ?? "?"}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Timer Bar */}
-                                        <div className="px-6 py-1.5 bg-white/[0.03] border-b border-white/5 flex items-center gap-4">
-                                            <div className="flex-1">
-                                                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={cn(
-                                                            "h-full rounded-full transition-all duration-500",
-                                                            pvpTimer > 50 ? "bg-primary" : pvpTimer > 20 ? "bg-yellow-500" : "bg-red-500"
-                                                        )}
-                                                        style={{ width: `${pvpTimer}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <span className={cn(
-                                                "text-[9px] font-mono font-bold w-10 text-right",
-                                                pvpTimer > 50 ? "text-primary" : pvpTimer > 20 ? "text-yellow-500" : "text-red-500 animate-pulse"
-                                            )}>
-                                                {`${(pvpTimer / 10).toFixed(1)}s`}
-                                            </span>
-                                            <button
-                                                onClick={handleQuitPvP}
-                                                className="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center hover:bg-red-500/20 transition-colors ml-1"
-                                            >
-                                                <X className="w-3.5 h-3.5 text-red-500" />
-                                            </button>
-                                        </div>
-
-                                        {/* Main Body — Code + Options */}
-                                        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
-                                            {/* Code */}
-                                            <div className="p-6 flex flex-col min-h-0 border-r border-white/5 bg-black/30">
-                                                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.3em] mb-3 flex items-center gap-2">
-                                                    <Terminal className="w-3.5 h-3.5" />
-                                                    Challenge {currentPvPIndex + 1} / {pvpMatch.challenges.length}
-                                                </p>
-                                                <div className="flex-1 rounded-2xl border border-white/10 overflow-hidden relative">
-                                                    <div className={cn("w-full h-full", isPvPCountingDown && "blur-md grayscale")}>
-                                                        <CodeMirror
-                                                            value={pvpMatch.challenges[currentPvPIndex]?.code || ""}
-                                                            height="100%"
-                                                            theme="dark"
-                                                            extensions={[python()]}
-                                                            editable={false}
-                                                            basicSetup={{ lineNumbers: true, foldGutter: true }}
-                                                            className="text-sm font-mono h-full"
-                                                        />
-                                                    </div>
-                                                    {isPvPCountingDown && (
-                                                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-                                                            <span className="text-8xl font-black font-mono text-primary drop-shadow-[0_0_30px_rgba(34,197,94,0.5)] animate-in zoom-in duration-300">
-                                                                {pvpStartCountdown}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Options */}
-                                            <div className="p-6 space-y-6 overflow-y-auto">
-                                                <div className="space-y-4">
-                                                    <h2 className="text-xl font-bold font-mono tracking-tighter">
-                                                        {isPvPCountingDown ? "Get Ready..." : pvpMatch.challenges[currentPvPIndex]?.title}
-                                                    </h2>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                        {(pvpMatch.challenges[currentPvPIndex]?.options || []).map((option: any) => (
-                                                            <button
-                                                                key={option}
-                                                                disabled={showPvPFeedback || pvpTimer === 0 || isPvPCountingDown}
-                                                                onClick={() => handlePvPSelection(option)}
-                                                                className={cn(
-                                                                    "p-4 rounded-xl border font-mono text-xs transition-all relative text-left",
-                                                                    pvpPrediction === option
-                                                                        ? option === pvpMatch.challenges[currentPvPIndex]?.correct
-                                                                            ? "bg-green-500/10 border-green-500 text-green-400"
-                                                                            : "bg-red-500/10 border-red-500 text-red-400"
-                                                                        : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/30"
-                                                                )}
-                                                            >
-                                                                {option}
-                                                                {pvpPrediction === option && (
-                                                                    <span className="absolute top-2 right-2">
-                                                                        {option === pvpMatch.challenges[currentPvPIndex]?.correct
-                                                                            ? <Check className="w-3 h-3 animate-in zoom-in" />
-                                                                            : <X className="w-3 h-3 animate-in zoom-in" />}
-                                                                    </span>
-                                                                )}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {showPvPFeedback && (
-                                                    <div className="p-5 bg-white/[0.03] rounded-2xl border border-white/10 space-y-4 animate-in slide-in-from-bottom-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={cn(
-                                                                "w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl border",
-                                                                pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct
-                                                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                                                    : "bg-red-500/20 text-red-400 border-red-500/30"
-                                                            )}>
-                                                                {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct ? "+10" : "0"}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold">
-                                                                    {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct ? "Correct!" : "Wrong!"}
-                                                                </p>
-                                                                <p className="text-sm text-slate-400 font-mono">
-                                                                    {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct
-                                                                        ? "You got it right before your opponent!"
-                                                                        : `Answer: ${pvpMatch.challenges[currentPvPIndex]?.correct}`}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <Button
-                                                            onClick={handleNextPvPItem}
-                                                            className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-mono rounded-xl group"
-                                                        >
-                                                            {currentPvPIndex < pvpMatch.challenges.length - 1 ? "Next Challenge" : "Finish Match"}
-                                                            <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isModeratorActive && (
-                                    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
-                                        <div className="max-w-6xl w-full bg-[#0a0a0a] rounded-3xl border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden flex flex-col md:flex-row h-[80vh]">
-                                            {/* Main Content: IDE */}
-                                            <div className="flex-1 flex flex-col min-w-0 border-r border-white/5">
-                                                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                                                    <div className="flex items-center gap-4">
-                                                        <button
-                                                            onClick={() => setIsModeratorActive(false)}
-                                                            className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                                                        >
-                                                            <ArrowLeft className="w-4 h-4" />
-                                                        </button>
-                                                        <div>
-                                                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                                                <ShieldCheck className="w-5 h-5 text-green-500" />
-                                                                {moderatorPhase === 'waiting' ? "Waiting Room" : "Moderator Challenge Room"}
-                                                            </h3>
-                                                            <p className="text-xs text-muted-foreground font-mono">
-                                                                {moderatorPhase === 'waiting'
-                                                                    ? `${JOINED_STUDENTS.length} Students Connected`
-                                                                    : `Mission Preview ${currentModeratorIndex + 1} of ${allFilteredCodes.length}`}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex-1 overflow-hidden bg-[#050505] relative p-6">
-                                                    {moderatorPhase === 'waiting' ? (
-                                                        <div className="h-full flex flex-col animate-in fade-in zoom-in-95 duration-500">
-                                                            <div className="mb-8 flex items-center justify-between">
-                                                                <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                                                    <Users2 className="w-4 h-4 text-primary" />
-                                                                    Connected Students
-                                                                </h4>
-                                                                <div className="px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
-                                                                    <span className="text-[10px] font-mono text-green-500 font-bold uppercase tracking-wider">Room Live</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar max-h-[55vh]">
-                                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-8 gap-x-4 pb-10">
-                                                                    {JOINED_STUDENTS.map(student => (
-                                                                        <div key={student.id} className="flex flex-col items-center gap-2 group transition-all animate-in fade-in zoom-in-95 duration-300">
-                                                                            <div className="relative">
-                                                                                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-lg font-bold text-primary group-hover:scale-105 transition-transform shadow-lg shadow-primary/5">
-                                                                                    {student.avatar}
-                                                                                </div>
-                                                                                <div className={cn(
-                                                                                    "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#050505]",
-                                                                                    student.status === 'ready' ? "bg-green-500" : "bg-yellow-500"
-                                                                                )} />
-                                                                            </div>
-                                                                            <p className="text-[10px] font-mono font-bold text-slate-400 truncate w-full text-center group-hover:text-primary transition-colors">
-                                                                                {student.name}
-                                                                            </p>
-                                                                        </div>
-                                                                    ))}
-
-                                                                    {/* Empty slots to indicate capacity */}
-                                                                    {[...Array(5)].map((_, i) => (
-                                                                        <div key={`empty-${i}`} className="flex flex-col items-center gap-2 opacity-5">
-                                                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-dashed border-white flex items-center justify-center">
-                                                                                <Users2 className="w-6 h-6 text-white" />
-                                                                            </div>
-                                                                            <div className="h-2 w-10 bg-white/20 rounded-full" />
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="mt-auto pt-6 border-t border-white/5 flex justify-center">
-                                                                <Button
-                                                                    onClick={handleStartMission}
-                                                                    className="h-12 px-10 bg-primary hover:bg-primary/90 text-white font-mono text-sm rounded-xl shadow-xl shadow-primary/20 flex items-center gap-3 active:scale-95 transition-transform"
-                                                                >
-                                                                    Start Mission
-                                                                    <Play className="w-4 h-4 fill-current" />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-green-500/10 rounded-md border border-green-500/20">
-                                                                <span className="text-[10px] font-mono font-bold text-green-500 uppercase tracking-widest">Instructor Preview</span>
-                                                            </div>
-                                                            <CodeMirror
-                                                                value={allFilteredCodes[currentModeratorIndex]?.code || ""}
-                                                                height="100%"
-                                                                theme="dark"
-                                                                extensions={[python()]}
-                                                                editable={false}
-                                                                basicSetup={{
-                                                                    lineNumbers: true,
-                                                                    foldGutter: true,
-                                                                }}
-                                                                className="text-sm font-mono h-full"
-                                                            />
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                <div className="p-6 border-t border-white/5 flex items-center justify-between bg-white/[0.01]">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                                        <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
-                                                            {moderatorPhase === 'waiting'
-                                                                ? `Access Code: ${roomCode}`
-                                                                : <span className="text-xs font-mono font-bold text-blue-600">
-                                                                    Active Challenge: {allFilteredCodes[currentModeratorIndex]?.title}
-                                                                </span>}
-                                                        </span>
-                                                    </div>
-                                                    {moderatorPhase === 'active' && (
-                                                        <Button
-                                                            onClick={handleNextModeratorItem}
-                                                            className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 rounded-xl flex items-center gap-2 group"
-                                                        >
-                                                            {currentModeratorIndex < allFilteredCodes.length - 1 ? "Next Mission" : "Finish Review"}
-                                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Sidebar: Invites & Management */}
-                                            <div className="w-full md:w-80 bg-white/[0.02] p-8 flex flex-col gap-8">
-                                                <div className="space-y-6">
-                                                    <div className="space-y-2">
-                                                        <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                                            <Users2 className="w-4 h-4 text-primary" />
-                                                            Invitations
-                                                        </h4>
-                                                        <p className="text-xs text-slate-400 leading-relaxed font-mono">
-                                                            Students can join this session using the following generated link.
-                                                        </p>
-                                                    </div>
-
-                                                    {!isLinkGenerated ? (
-                                                        <Button
-                                                            onClick={handleGenerateLink}
-                                                            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-mono text-sm rounded-xl shadow-lg shadow-green-600/10"
-                                                        >
-                                                            Generate Join Link
-                                                        </Button>
-                                                    ) : (
-                                                        <div className="space-y-4 animate-in slide-in-from-right-4">
-                                                            <div className="p-4 bg-black/40 rounded-xl border border-white/10 space-y-2">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-[10px] font-mono text-muted-foreground uppercase">Access Code</span>
-                                                                    <span className="text-[10px] font-mono text-green-500 uppercase">Live</span>
-                                                                </div>
-                                                                <div className="text-2xl font-mono font-bold tracking-widest text-center py-2 border-y border-white/5">
-                                                                    {roomCode}
-                                                                </div>
-                                                            </div>
-                                                            <Button
-                                                                variant="outline"
-                                                                className="w-full h-12 border-white/10 hover:bg-white/5 font-mono text-xs"
-                                                                onClick={handleGenerateLink}
-                                                            >
-                                                                Copy Link Again
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="mt-auto space-y-4 pt-6 border-t border-white/5">
-                                                    <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">
-                                                        <span>Live Status</span>
-                                                        <span className="text-green-500">Active</span>
-                                                    </div>
-                                                    <Button
-                                                        className="w-full h-10 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 font-mono text-xs font-bold"
-                                                        onClick={() => setIsModeratorActive(false)}
-                                                    >
-                                                        Terminate Room
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* Coming Soon/Power for Universities message */}
                                 <div className="mt-12 p-8 rounded-3xl bg-primary/5 border border-primary/20 text-center">
                                     <BrainCircuit className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
@@ -1849,6 +1608,439 @@ const InfiniteSpace = () => {
                     </div>
                 )}
             </main>
+
+            {/* ─── Global PvP Overlays (Outside main for z-index safety) ─── */}
+            {/* PvP Searching Overlay */}
+            {pvpStatus === 'searching' && (
+                <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-[#0a0a0a] rounded-3xl border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
+                        <div className="relative mx-auto w-24 h-24">
+                            <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                            <div className="absolute inset-4 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Globe className="w-8 h-8 text-primary animate-pulse" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-bold font-mono tracking-tighter">Searching for Opponent...</h3>
+                            <p className="text-sm text-slate-400 font-mono italic">Looking for a challenger in the global arena</p>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-primary/60 uppercase tracking-[0.2em]">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Synchronizing Vector Sync
+                            </div>
+                            <Button
+                                variant="ghost"
+                                onClick={handleQuitPvP}
+                                className="text-slate-400 hover:text-white hover:bg-white/5 font-mono text-xs flex items-center justify-center gap-2"
+                            >
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Return to Station
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PvP Battle Arena */}
+            {isPvPActive && pvpMatch && (
+                <div className="fixed inset-0 z-[200] bg-black backdrop-blur-xl flex flex-col animate-in fade-in duration-300 text-white overflow-hidden h-[100dvh]">
+                    {/* ─── Timer Bar (Progress & Countdown) ─── */}
+                    <div className="px-4 py-1.5 sm:px-6 sm:py-2 bg-white/[0.03] border-b border-white/5 flex items-center gap-4 shrink-0 z-50 relative">
+                        <div className="flex-1">
+                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                    className={cn(
+                                        "h-full rounded-full transition-all duration-500",
+                                        pvpTimer > 50 ? "bg-primary" : pvpTimer > 20 ? "bg-yellow-500" : "bg-red-500"
+                                    )}
+                                    style={{ width: `${pvpTimer}%` }}
+                                />
+                            </div>
+                        </div>
+                        <span className={cn(
+                            "text-[10px] sm:text-xs font-mono font-bold w-12 text-right",
+                            pvpTimer > 50 ? "text-primary" : pvpTimer > 20 ? "text-yellow-500" : "text-red-500 animate-pulse"
+                        )}>
+                            {`${(pvpTimer / 10).toFixed(1)}s`}
+                        </span>
+                        <button
+                            onClick={handleQuitPvP}
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center hover:bg-red-500/20 transition-colors ml-1"
+                        >
+                            <X className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500" />
+                        </button>
+                    </div>
+
+                    {/* ─── Scoreboard Header (Player Details) ─── */}
+                    <div className="flex items-center justify-between px-2 py-1 sm:px-6 sm:py-2 border-b border-white/5 bg-[#0a0a0a] shrink-0 z-50 relative">
+                        <button
+                            onClick={handleQuitPvP}
+                            className="mr-1 sm:mr-2 p-1 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </button>
+
+                        {/* Player (You) — Left */}
+                        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
+                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-primary font-mono shrink-0">
+                                {user?.name?.[0]?.toUpperCase() ?? "?"}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <span className="hidden sm:block text-[8px] font-mono text-primary/60 uppercase tracking-wider leading-none mb-0.5">Player</span>
+                                <span className="font-bold font-mono text-[10px] sm:text-base truncate text-white leading-none max-w-[70px] sm:max-w-[150px]">{user?.name ?? "You"}</span>
+                            </div>
+                        </div>
+
+                        {/* Score — Center */}
+                        <div className="flex flex-col items-center mx-1 sm:mx-4 shrink-0">
+                            <div className="flex items-center gap-1.5 sm:gap-3 px-2 py-0.5 sm:px-4 sm:py-1 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-inner">
+                                <span className="text-base sm:text-3xl font-black font-mono text-primary tabular-nums tracking-tighter">{pvpScore}</span>
+                                <span className="text-sm sm:text-2xl font-bold text-slate-500 font-mono">:</span>
+                                <span className="text-base sm:text-3xl font-black font-mono text-secondary tabular-nums tracking-tighter">{pvpOpponentScore}</span>
+                            </div>
+                            <span className="hidden sm:block text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-0.5 leading-none">Score</span>
+                        </div>
+
+                        {/* Opponent — Right */}
+                        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 justify-end">
+                            <div className="flex flex-col items-end min-w-0">
+                                <span className="hidden sm:block text-[8px] font-mono text-secondary/60 uppercase tracking-wider leading-none mb-0.5 text-right">Opponent</span>
+                                <span className="font-bold font-mono text-[10px] sm:text-base truncate text-white text-right leading-none max-w-[70px] sm:max-w-[150px]">
+                                    {pvpMatch.player1.email.toLowerCase() === user?.email.toLowerCase() ? (
+                                        pvpMatch.player2.name
+                                    ) : (
+                                        pvpMatch.player1.name
+                                    )}
+                                </span>
+                            </div>
+                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-secondary font-mono shrink-0">
+                                {(pvpMatch.player1.email.toLowerCase() === user?.email.toLowerCase() ? pvpMatch.player2.name : pvpMatch.player1.name)?.[0]?.toUpperCase() ?? "?"}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Body — Code + Options */}
+                    <div className="flex-1 overflow-hidden flex flex-col lg:grid lg:grid-cols-2 relative">
+                        {/* Code */}
+                        <div className="p-3 sm:p-6 flex flex-col h-[35%] lg:h-auto min-h-0 border-b lg:border-r lg:border-b-0 border-white/5 bg-black/30">
+                            <p className="text-[8px] sm:text-[10px] font-mono text-muted-foreground uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                                <Terminal className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                                Challenge {currentPvPIndex + 1} / {pvpMatch.challenges.length}
+                            </p>
+                            <div className="flex-1 rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden relative">
+                                <div className={cn("w-full h-full", isPvPCountingDown && "blur-md grayscale")}>
+                                    <CodeMirror
+                                        value={pvpMatch.challenges[currentPvPIndex]?.code || ""}
+                                        height="100%"
+                                        theme="dark"
+                                        extensions={[python()]}
+                                        editable={false}
+                                        basicSetup={{ lineNumbers: true, foldGutter: true }}
+                                        className="text-[12px] sm:text-sm font-mono h-full"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Full Screen Countdown Overlay */}
+                        {isPvPCountingDown && (
+                            <div className="absolute inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
+                                <div className="flex flex-col items-center gap-6">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                                        <span className="text-8xl flex items-center justify-center font-black font-mono text-primary drop-shadow-[0_0_30px_rgba(34,197,94,0.5)] animate-in zoom-in duration-300">
+                                            {Math.ceil(pvpStartCountdown)}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-mono text-primary/60 tracking-[0.4em] uppercase animate-pulse">Synchronizing Orbit...</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Options */}
+                        <div className="p-3 sm:p-6 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+                            <div className="space-y-4 flex-1 flex flex-col">
+                                <h2 className="text-lg sm:text-xl font-bold font-mono tracking-tighter shrink-0">
+                                    {isPvPCountingDown ? "Get Ready..." : pvpMatch.challenges[currentPvPIndex]?.title}
+                                </h2>
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                    {(pvpMatch.challenges[currentPvPIndex]?.options || []).map((option: any) => (
+                                        <button
+                                            key={option}
+                                            disabled={showPvPFeedback || pvpTimer === 0 || isPvPCountingDown}
+                                            onClick={() => handlePvPSelection(option)}
+                                            className={cn(
+                                                "relative h-10 sm:h-20 flex items-center justify-center rounded-lg sm:rounded-2xl border text-[10px] sm:text-base font-bold font-mono transition-all duration-300",
+                                                pvpPrediction === option
+                                                    ? option === pvpMatch.challenges[currentPvPIndex]?.correct
+                                                        ? "bg-green-500/10 border-green-500 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+                                                        : "bg-red-500/10 border-red-500 text-red-400"
+                                                    : "bg-white/5 border-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20 hover:text-white"
+                                            )}
+                                        >
+                                            {option}
+                                            {pvpPrediction === option && (
+                                                <span className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                                                    {option === pvpMatch.challenges[currentPvPIndex]?.correct
+                                                        ? <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-in zoom-in" />
+                                                        : <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-in zoom-in" />}
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {showPvPFeedback && (
+                                <div className="mt-4 p-3 sm:p-5 bg-white/[0.03] rounded-xl sm:rounded-2xl border border-white/10 space-y-3 sm:space-y-4 animate-in slide-in-from-bottom-4 shrink-0">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className={cn(
+                                            "w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-lg sm:text-xl border",
+                                            pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct
+                                                ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                                : "bg-red-500/20 text-red-400 border-red-500/30"
+                                        )}>
+                                            {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct ? `+${pvpPointsAwarded}` : "0"}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm sm:text-base">
+                                                {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct ? "Correct!" : "Wrong!"}
+                                            </p>
+                                            <p className="text-[10px] sm:text-sm text-slate-400 font-mono">
+                                                {pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct
+                                                    ? "Victory point secured!"
+                                                    : `Correct: ${pvpMatch.challenges[currentPvPIndex]?.correct}`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={handleNextPvPItem}
+                                        className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-white font-mono rounded-lg sm:rounded-xl group text-xs sm:text-sm"
+                                    >
+                                        {currentPvPIndex < pvpMatch.challenges.length - 1 ? "Next Challenge" : "Finish Match"}
+                                        <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isModeratorActive && (
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+                    <div className="max-w-6xl w-full bg-[#0a0a0a] rounded-3xl border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden flex flex-col md:flex-row h-[80vh]">
+                        {/* Main Content: IDE */}
+                        <div className="flex-1 flex flex-col min-w-0 border-r border-white/5">
+                            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setIsModeratorActive(false)}
+                                        className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                    </button>
+                                    <div>
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <ShieldCheck className="w-5 h-5 text-green-500" />
+                                            {moderatorPhase === 'waiting' ? "Waiting Room" : "Moderator Challenge Room"}
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground font-mono">
+                                            {moderatorPhase === 'waiting'
+                                                ? `${JOINED_STUDENTS.length} Students Connected`
+                                                : `Mission Preview ${currentModeratorIndex + 1} of ${allFilteredCodes.length}`}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-hidden bg-[#050505] relative p-6">
+                                {moderatorPhase === 'waiting' ? (
+                                    <div className="h-full flex flex-col animate-in fade-in zoom-in-95 duration-500">
+                                        <div className="mb-8 flex items-center justify-between">
+                                            <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                                <Users2 className="w-4 h-4 text-primary" />
+                                                Connected Students
+                                            </h4>
+                                            <div className="px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+                                                <span className="text-[10px] font-mono text-green-500 font-bold uppercase tracking-wider">Room Live</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar max-h-[55vh]">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-8 gap-x-4 pb-10">
+                                                {JOINED_STUDENTS.map(student => (
+                                                    <div key={student.id} className="flex flex-col items-center gap-2 group transition-all animate-in fade-in zoom-in-95 duration-300">
+                                                        <div className="relative">
+                                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-lg font-bold text-primary group-hover:scale-105 transition-transform shadow-lg shadow-primary/5">
+                                                                {student.avatar}
+                                                            </div>
+                                                            <div className={cn(
+                                                                "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#050505]",
+                                                                student.status === 'ready' ? "bg-green-500" : "bg-yellow-500"
+                                                            )} />
+                                                        </div>
+                                                        <p className="text-[10px] font-mono font-bold text-slate-400 truncate w-full text-center group-hover:text-primary transition-colors">
+                                                            {student.name}
+                                                        </p>
+                                                    </div>
+                                                ))}
+
+                                                {/* Empty slots to indicate capacity */}
+                                                {[...Array(5)].map((_, i) => (
+                                                    <div key={`empty-${i}`} className="flex flex-col items-center gap-2 opacity-5">
+                                                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-dashed border-white flex items-center justify-center">
+                                                            <Users2 className="w-6 h-6 text-white" />
+                                                        </div>
+                                                        <div className="h-2 w-10 bg-white/20 rounded-full" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-auto pt-6 border-t border-white/5 flex justify-center">
+                                            <Button
+                                                onClick={handleStartMission}
+                                                className="h-12 px-10 bg-primary hover:bg-primary/90 text-white font-mono text-sm rounded-xl shadow-xl shadow-primary/20 flex items-center gap-3 active:scale-95 transition-transform"
+                                            >
+                                                Start Mission
+                                                <Play className="w-4 h-4 fill-current" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-green-500/10 rounded-md border border-green-500/20">
+                                            <span className="text-[10px] font-mono font-bold text-green-500 uppercase tracking-widest">Instructor Preview</span>
+                                        </div>
+                                        <CodeMirror
+                                            value={allFilteredCodes[currentModeratorIndex]?.code || ""}
+                                            height="100%"
+                                            theme="dark"
+                                            extensions={[python()]}
+                                            editable={false}
+                                            basicSetup={{
+                                                lineNumbers: true,
+                                                foldGutter: true,
+                                            }}
+                                            className="text-sm font-mono h-full"
+                                        />
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="p-6 border-t border-white/5 flex items-center justify-between bg-white/[0.01]">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                                        {moderatorPhase === 'waiting'
+                                            ? `Access Code: ${roomCode}`
+                                            : <span className="text-xs font-mono font-bold text-blue-600">
+                                                Active Challenge: {allFilteredCodes[currentModeratorIndex]?.title}
+                                            </span>}
+                                    </span>
+                                </div>
+                                {moderatorPhase === 'active' && (
+                                    <Button
+                                        onClick={handleNextModeratorItem}
+                                        className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 rounded-xl flex items-center gap-2 group"
+                                    >
+                                        {currentModeratorIndex < allFilteredCodes.length - 1 ? "Next Mission" : "Finish Review"}
+                                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Sidebar: Invites & Management */}
+                        <div className="w-full md:w-80 bg-white/[0.02] p-8 flex flex-col gap-8">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <h4 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                        <Users2 className="w-4 h-4 text-primary" />
+                                        Invitations
+                                    </h4>
+                                    <p className="text-xs text-slate-400 leading-relaxed font-mono">
+                                        Students can join this session using the following generated link.
+                                    </p>
+                                </div>
+
+                                {!isLinkGenerated ? (
+                                    <Button
+                                        onClick={handleGenerateLink}
+                                        className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-mono text-sm rounded-xl shadow-lg shadow-green-600/10"
+                                    >
+                                        Generate Join Link
+                                    </Button>
+                                ) : (
+                                    <div className="space-y-4 animate-in slide-in-from-right-4">
+                                        <div className="p-4 bg-black/40 rounded-xl border border-white/10 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-mono text-muted-foreground uppercase">Access Code</span>
+                                                <span className="text-[10px] font-mono text-green-500 uppercase">Live</span>
+                                            </div>
+                                            <div className="text-2xl font-mono font-bold tracking-widest text-center py-2 border-y border-white/5">
+                                                {roomCode}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full h-12 border-white/10 hover:bg-white/5 font-mono text-xs"
+                                            onClick={handleGenerateLink}
+                                        >
+                                            Copy Link Again
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-auto space-y-4 pt-6 border-t border-white/5">
+                                <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500">
+                                    <span>Live Status</span>
+                                    <span className="text-green-500">Active</span>
+                                </div>
+                                <Button
+                                    className="w-full h-10 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 font-mono text-xs font-bold"
+                                    onClick={() => setIsModeratorActive(false)}
+                                >
+                                    Terminate Room
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+            {/* Navigation Bar */}
+            {user && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-[100]">
+                    <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-1 shadow-2xl shadow-black/50 flex items-center justify-around">
+                        <button
+                            onClick={() => navigate("/dashboard")}
+                            className="flex flex-col items-center gap-0.5 p-1.5 text-slate-400 hover:text-emerald-500 transition-colors group"
+                        >
+                            <LayoutDashboard className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Dash</span>
+                        </button>
+                        <button
+                            onClick={() => navigate("/infinite-space")}
+                            className="flex flex-col items-center gap-0.5 p-1.5 text-emerald-500 transition-colors group"
+                        >
+                            <Zap className="w-4 h-4 scale-110 transition-transform" />
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Space</span>
+                        </button>
+                        <button
+                            onClick={() => navigate(`/profile/${user?.username || 'me'}`)}
+                            className="flex flex-col items-center gap-0.5 p-1.5 text-slate-400 hover:text-emerald-500 transition-colors group"
+                        >
+                            <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Profile</span>
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

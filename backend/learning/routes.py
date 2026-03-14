@@ -303,12 +303,12 @@ def pvp_join():
         return jsonify({"error": "Database connection failed"}), 500
     
     data = request.get_json(silent=True)
-    if not data or not data.get('email'):
-        return jsonify({"error": "Email is required"}), 400
-    
-    email = data.get('email')
+    email = data.get('email', '').lower()
     name = data.get('name', 'Anonymous Student')
     difficulty = data.get('difficulty', 'Beginner')
+    
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
     
     # Check if already in an active match
     active_match = extensions.pvp_matches_collection.find_one({
@@ -377,7 +377,7 @@ def pvp_status():
     if not ensure_connection():
         return jsonify({"error": "Database connection failed"}), 500
     
-    email = request.args.get('email')
+    email = request.args.get('email', '').lower()
     if not email:
         return jsonify({"error": "Email is required"}), 400
         
@@ -420,7 +420,7 @@ def pvp_update_score():
     
     data = request.get_json(silent=True)
     match_id = data.get('match_id')
-    email = data.get('email')
+    email = data.get('email', '').lower()
     score = data.get('score', 0)
     
     if not match_id or not email:
@@ -449,10 +449,9 @@ def pvp_quit():
         return jsonify({"error": "Database connection failed"}), 500
     
     data = request.get_json(silent=True)
-    if not data or not data.get('email'):
+    email = data.get('email', '').lower()
+    if not email:
         return jsonify({"error": "Email is required"}), 400
-        
-    email = data.get('email')
     extensions.pvp_queue_collection.delete_one({"email": email})
     
     extensions.pvp_matches_collection.update_many(
@@ -461,3 +460,68 @@ def pvp_quit():
     )
     
     return jsonify({"success": True}), 200
+@learning_bp.route('/api/learning/solo/save', methods=['POST'])
+def save_solo_battle():
+    if not ensure_connection():
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    data = request.get_json(silent=True)
+    email = data.get('email', '').lower()
+    score = data.get('score', 0)
+    difficulty = data.get('difficulty', 'Beginner')
+    challenges_count = data.get('challenges_count', 0)
+    
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+        
+    battle_record = {
+        "email": email,
+        "score": score,
+        "difficulty": difficulty,
+        "challenges_count": challenges_count,
+        "type": "solo",
+        "created_at": datetime.datetime.utcnow().isoformat()
+    }
+    
+    try:
+        extensions.solo_battles_collection.insert_one(battle_record)
+        return jsonify({"success": True}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@learning_bp.route('/api/learning/match-history/<email>', methods=['GET'])
+def get_match_history(email):
+    if not ensure_connection():
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    email = email.lower()
+    try:
+        # Fetch Solo Battles
+        solo_battles = list(extensions.solo_battles_collection.find({"email": email}).sort("created_at", -1))
+        for b in solo_battles:
+            b['id'] = str(b['_id'])
+            del b['_id']
+            b['mode'] = 'Solo'
+
+        # Fetch PvP Matches
+        pvp_matches = list(extensions.pvp_matches_collection.find({
+            "$or": [{"player1.email": email}, {"player2.email": email}],
+            "status": "completed"
+        }).sort("created_at", -1))
+        
+        history = []
+        for m in pvp_matches:
+            m['id'] = str(m['_id'])
+            del m['_id']
+            m['mode'] = 'PvP'
+            # Determine if win/loss/draw? 
+            # For now just send the scores
+            history.append(m)
+        
+        # Combine and sort
+        combined = solo_battles + history
+        combined.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return jsonify(combined), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -31,6 +31,7 @@ import AdminMissions from "./pages/AdminMissions";
 import AdminCreateProblems from "./pages/AdminCreateProblems";
 import AdminBrowseProblemSets from "./pages/AdminBrowseProblemSets";
 import AITeacher from "./pages/AITeacher";
+import MatchHistory from "./pages/MatchHistory";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "@/components/ScrollToTop";
 import LearningPrefetcher from "./components/LearningPrefetcher";
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/ai-teacher" element={<AITeacher />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/match-history" element={<MatchHistory />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

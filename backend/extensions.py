@@ -19,9 +19,10 @@ ai_cache_collection = None
 code_predictions_collection = None
 pvp_queue_collection = None
 pvp_matches_collection = None
+solo_battles_collection = None
 
 def init_extensions(app):
-    global serializer, client, db, users_collection, learning_materials_collection, projects_collection, problem_sets_collection, ai_cache_collection, code_predictions_collection, pvp_queue_collection, pvp_matches_collection
+    global serializer, client, db, users_collection, learning_materials_collection, projects_collection, problem_sets_collection, ai_cache_collection, code_predictions_collection, pvp_queue_collection, pvp_matches_collection, solo_battles_collection
     
     # Initialize Mail
     mail.init_app(app)
@@ -43,6 +44,7 @@ def init_extensions(app):
             code_predictions_collection = db.code_predictions
             pvp_queue_collection = db.pvp_queue
             pvp_matches_collection = db.pvp_matches
+            solo_battles_collection = db.solo_battles
             print("MongoDB client initialized from extensions")
         except Exception as e:
             print(f"MongoDB init error in extensions: {e}")
