@@ -792,13 +792,13 @@ const InfiniteSpace = () => {
                 {/* Header Section - Brutalist */}
                 <div className="mb-6 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6">
                     <div className="space-y-1">
-                        <Link to="/python-heroes" className="inline-flex items-center gap-2 text-[10px] text-slate-500 hover:text-primary transition-colors group uppercase tracking-widest">
-                            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
-                            Back to Academy
+                        <Link to="/python-heroes" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary transition-colors group uppercase tracking-widest font-black">
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            Back
                         </Link>
-                        <h1 className="text-3xl sm:text-4xl font-black tracking-tighter flex items-center gap-3">
+                        <h1 className="text-2xl sm:text-3xl font-black tracking-tighter flex items-center gap-3">
                             INFINITE <span className="text-primary italic">SPACE</span>
-                            <BrainCircuit className="w-6 h-6 text-primary" />
+                            <BrainCircuit className="w-5 h-5 text-primary" />
                         </h1>
                         <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">University Programming Playground &bull; Logic Mastery Engine</p>
                     </div>

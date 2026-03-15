@@ -47,7 +47,7 @@ const AITeacher = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col lg:flex-row gap-8">
+                    <div className="flex flex-col lg:flex-row gap-8">
                         {/* Interactive AI Teacher Component */}
                         <AITeacherComponent />
                     </div>

@@ -333,13 +333,21 @@ const AITeacherComponent = () => {
     }, [activeHighlightIndex, lesson]);
 
     return (
-        <div className="flex-1 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
-            <div className="flex-1 flex flex-row min-h-0 relative">
+        <div className={cn(
+            "flex-initial flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden max-h-[calc(100vh-200px)]",
+            isPanelOpen ? "gap-6" : "gap-0"
+        )}>
+            <div className={cn(
+                "flex-initial flex flex-row min-h-0 relative",
+                isPanelOpen ? "gap-6" : "gap-0"
+            )}>
                 {/* Left: AI explanation and Input */}
                 <div 
                     className={cn(
-                        "flex flex-col gap-4 transition-all duration-500 ease-in-out border-r-2 border-black/10 pr-6 mr-6 h-full",
-                        isPanelOpen ? "w-full lg:w-1/3 opacity-100" : "w-0 opacity-0 pointer-events-none !mr-0 !pr-0 border-none"
+                        "flex flex-col gap-4 transition-all duration-500 ease-in-out h-full overflow-hidden border-r-2",
+                        isPanelOpen 
+                            ? "w-full lg:w-1/3 opacity-100 border-black/10 pr-6 mr-0" 
+                            : "w-0 opacity-0 pointer-events-none border-transparent pr-0 mr-0"
                     )}
                 >
                     <div className="flex-1 bg-white border-2 border-black/10 p-6 overflow-y-auto flex flex-col relative group shadow-2xl">
@@ -432,7 +440,7 @@ const AITeacherComponent = () => {
                 </div>
 
                 {/* Right: Code Container */}
-                <div className="flex-1 bg-slate-900 border-2 border-black/10 overflow-hidden flex flex-col shadow-2xl relative min-h-[400px]">
+                <div className="flex-1 bg-slate-900 border-2 border-black/10 overflow-hidden flex flex-col shadow-2xl relative">
                     <div 
                         className="px-6 py-4 border-b-2 border-black/20 bg-black/60 flex items-center justify-between cursor-grab active:cursor-grabbing"
                         onMouseDown={handleHeaderDragStart}
@@ -469,7 +477,9 @@ const AITeacherComponent = () => {
                         <CodeMirror
                             ref={editorRef}
                             value={displayedCode}
-                            height="100%"
+                            height="auto"
+                            minHeight="100px"
+                            maxHeight="500px"
                             extensions={[python(), highlightField]}
                             theme="dark"
                             readOnly={true}
