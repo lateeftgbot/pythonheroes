@@ -81,6 +81,14 @@ const AITeacherComponent = () => {
     const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
+    // Stop audio on unmount
+    useEffect(() => {
+        return () => {
+            window.speechSynthesis.cancel();
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+        };
+    }, []);
+
     const categories = [
         { id: "basic", name: "Basics", icon: Code2 },
         { id: "intermediate", name: "Intermediate", icon: BrainCircuit },
@@ -89,6 +97,9 @@ const AITeacherComponent = () => {
     ];
 
     const fetchLesson = async (categoryPrompt?: string, catId?: string) => {
+        // Immediate warm-up to claim user gesture before async fetch
+        warmupAudio();
+        
         // Stop any current lesson immediately
         stopEverything();
 
@@ -270,7 +281,6 @@ const AITeacherComponent = () => {
     };
 
     const handleCategoryClick = (catId: string, catName: string) => {
-        warmupAudio();
         fetchLesson(`Give me a ${catName} lesson.`, catId);
     };
 
