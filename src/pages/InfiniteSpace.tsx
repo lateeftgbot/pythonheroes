@@ -832,7 +832,7 @@ const InfiniteSpace = () => {
                         )}
                     >
                         <BrainCircuit className="w-3 h-3" />
-                        Library
+                        Problems
                         <span className="opacity-50 text-[8px]">[{filteredProblems.length}]</span>
                     </button>
                     <button
@@ -845,7 +845,7 @@ const InfiniteSpace = () => {
                         )}
                     >
                         <Code2 className="w-3 h-3" />
-                        Projects
+                        Codes
                         <span className="opacity-50 text-[8px]">[{allCodePredictions.length}]</span>
                     </button>
                     <button
@@ -938,7 +938,7 @@ const InfiniteSpace = () => {
                                 <div className="flex-1 bg-[#fdf6e3] text-[#1a1a1a] border border-white/10 flex flex-col p-3 sm:p-4">
                                     <p className="text-[7px] font-black text-[#555] uppercase tracking-[0.4em] mb-3 flex items-center gap-3">
                                         <span className="h-[1px] w-4 bg-black/30" />
-                                        LIBRARY_SECTOR // UNIVERSITY_LOGIC_NODES
+                                        PROBLEMS_SECTOR // UNIVERSITY_LOGIC_NODES
                                         <span className="h-[1px] w-4 bg-black/30" />
                                     </p>
                                     <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar-brutalist">
@@ -1135,26 +1135,26 @@ const InfiniteSpace = () => {
                                 </p>
 
                                 {/* Challenge type picker - square */}
-                                <div className="flex gap-[1px] bg-black/10 p-[1px] mb-6 self-start">
+                                <div className="flex w-full gap-[1px] bg-black/10 p-[1px] mb-6">
                                     <button
                                         onClick={() => setChallengeType('solutions')}
                                         className={cn(
-                                            "flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            "flex-1 flex items-center justify-center gap-2 px-2 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
                                             challengeType === 'solutions' ? "bg-[#0a0a0a] text-white" : "text-slate-600 hover:bg-black/10"
                                         )}
                                     >
                                         <Code2 className="w-3.5 h-3.5" />
-                                        Code Solutions
+                                        <span className="truncate">Solutions</span>
                                     </button>
                                     <button
                                         onClick={() => setChallengeType('typing')}
                                         className={cn(
-                                            "flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            "flex-1 flex items-center justify-center gap-2 px-2 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
                                             challengeType === 'typing' ? "bg-[#0a0a0a] text-white" : "text-slate-600 hover:bg-black/10"
                                         )}
                                     >
                                         <Keyboard className="w-3.5 h-3.5" />
-                                        Typing Challenge
+                                        <span className="truncate">Typing</span>
                                     </button>
                                 </div>
 
@@ -1751,13 +1751,13 @@ const InfiniteSpace = () => {
                         </div>
 
                         {/* Category Selector */}
-                        <div className="flex items-center gap-2 px-6 py-4 bg-white/50 border-b border-black/5 overflow-x-auto custom-scrollbar-brutalist hide-scrollbar">
+                        <div className="flex w-full gap-[1px] bg-black/5 p-[1px] border-b border-black/5">
                             {['Global', 'Solo', 'PvP', 'Challenges'].map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setLeaderboardCategory(cat as any)}
                                     className={cn(
-                                        "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-colors border",
+                                        "flex-1 py-2 text-[8px] font-black uppercase tracking-widest transition-colors border",
                                         leaderboardCategory === cat
                                             ? "bg-[#1a1a1a] text-amber-400 border-[#1a1a1a]"
                                             : "bg-white text-slate-500 border-black/10 hover:bg-black/5"
