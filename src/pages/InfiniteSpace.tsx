@@ -79,7 +79,7 @@ const MOCK_LEADERBOARD: LeaderboardPlayer[] = [
 const InfiniteSpace = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     
     // Read initial state from URL
     const initialTab = (searchParams.get('tab') as Tab) || 'problems';
@@ -725,7 +725,7 @@ const InfiniteSpace = () => {
     };
 
     const filteredProblems = useMemo(() =>
-        problems.filter(p => difficulty === 'All' || p.difficulty === difficulty),
+        problems.filter(p => difficulty === 'All' || p.difficulty?.toLowerCase() === difficulty.toLowerCase()),
         [problems, difficulty]
     );
 
@@ -755,7 +755,7 @@ const InfiniteSpace = () => {
     // Memoize filtering and pagination for Code Predictions
     const allFilteredCodes = useMemo(() => {
         if (difficulty === 'All') return allCodePredictions;
-        return allCodePredictions.filter(c => c.difficulty === difficulty);
+        return allCodePredictions.filter(c => c.difficulty?.toLowerCase() === difficulty.toLowerCase());
     }, [allCodePredictions, difficulty]);
 
     const paginatedCodes = useMemo(() => {
@@ -821,11 +821,19 @@ const InfiniteSpace = () => {
                 </div>
 
                 {/* Tab Bar - Brutalist Square */}
-                <div className="flex mb-0 shrink-0 self-start w-full h-8">
+                <div className="grid grid-cols-12 mb-0 shrink-0 self-start w-full h-8">
                     <button
-                        onClick={() => { setActiveTab('problems'); setCurrentPage(0); }}
+                        onClick={() => {
+                            setActiveTab('problems');
+                            setCurrentPage(0);
+                            setSearchParams(prev => {
+                                prev.set('tab', 'problems');
+                                prev.delete('leaderboard');
+                                return prev;
+                            });
+                        }}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-l border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.1)]",
+                            "col-span-4 flex items-center justify-center gap-1.5 px-2 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-l border-white/10 shadow-[inner_0px_0px_0px_rgba(34,197,94,0.1)]",
                             activeTab === 'problems'
                                 ? "bg-primary text-[#0a0a0a]"
                                 : "bg-primary/10 text-primary/60 hover:bg-primary/20 hover:text-primary"
@@ -836,9 +844,17 @@ const InfiniteSpace = () => {
                         <span className="opacity-50 text-[8px]">[{filteredProblems.length}]</span>
                     </button>
                     <button
-                        onClick={() => { setActiveTab('codes'); setFocusedCodeId(null); }}
+                        onClick={() => {
+                            setActiveTab('codes');
+                            setFocusedCodeId(null);
+                            setSearchParams(prev => {
+                                prev.set('tab', 'codes');
+                                prev.delete('leaderboard');
+                                return prev;
+                            });
+                        }}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(59,130,246,0.1)]",
+                            "col-span-4 flex items-center justify-center gap-1.5 px-2 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-x border-white/10 shadow-[inner_0px_0px_0px_rgba(59,130,246,0.1)]",
                             activeTab === 'codes'
                                 ? "bg-secondary text-[#0a0a0a]"
                                 : "bg-secondary/10 text-secondary/60 hover:bg-secondary/20 hover:text-secondary"
@@ -849,9 +865,16 @@ const InfiniteSpace = () => {
                         <span className="opacity-50 text-[8px]">[{allCodePredictions.length}]</span>
                     </button>
                     <button
-                        onClick={() => setActiveTab('challenges')}
+                        onClick={() => {
+                            setActiveTab('challenges');
+                            setSearchParams(prev => {
+                                prev.set('tab', 'challenges');
+                                prev.delete('leaderboard');
+                                return prev;
+                            });
+                        }}
                         className={cn(
-                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.1)]",
+                            "col-span-4 flex items-center justify-center gap-1.5 px-2 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-r border-white/10 shadow-[inner_0px_0px_0px_rgba(16,185,129,0.1)]",
                             activeTab === 'challenges'
                                 ? "bg-emerald-500 text-[#0a0a0a]"
                                 : "bg-emerald-500/10 text-emerald-400/70 hover:bg-emerald-500/20 hover:text-emerald-400"
@@ -864,15 +887,15 @@ const InfiniteSpace = () => {
 
                 {/* Difficulty Filter - Coloured Square Buttons */}
                 {activeTab !== 'challenges' && (
-                    <div className="flex gap-[1px] bg-white/5 p-[1px] mb-0 shrink-0">
+                    <div className="grid grid-cols-12 mb-0 shrink-0 w-full">
                         {/* ALL */}
                         <button
                             onClick={() => { setDifficulty('All'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
                             className={cn(
-                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                "col-span-3 px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] transition-all border-l border-b border-white/10",
                                 difficulty === 'All'
                                     ? "bg-violet-600 text-white border-violet-700"
-                                    : "bg-violet-950 text-violet-400 border-violet-800 hover:bg-violet-900"
+                                    : "bg-violet-950 text-violet-400 border-violet-800/20 hover:bg-violet-900"
                             )}
                         >
                             All
@@ -881,10 +904,10 @@ const InfiniteSpace = () => {
                         <button
                             onClick={() => { setDifficulty('Beginner'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
                             className={cn(
-                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                "col-span-3 px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] transition-all border-l border-b border-white/10",
                                 difficulty === 'Beginner'
                                     ? "bg-emerald-500 text-black border-emerald-600"
-                                    : "bg-emerald-950 text-emerald-400 border-emerald-800 hover:bg-emerald-900"
+                                    : "bg-emerald-950 text-emerald-400 border-emerald-800/20 hover:bg-emerald-900"
                             )}
                         >
                             Beginner
@@ -893,10 +916,10 @@ const InfiniteSpace = () => {
                         <button
                             onClick={() => { setDifficulty('Intermediate'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
                             className={cn(
-                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                "col-span-3 px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] transition-all border-l border-b border-white/10",
                                 difficulty === 'Intermediate'
                                     ? "bg-amber-400 text-black border-amber-500"
-                                    : "bg-amber-950 text-amber-400 border-amber-800 hover:bg-amber-900"
+                                    : "bg-amber-950 text-amber-400 border-amber-800/20 hover:bg-amber-900"
                             )}
                         >
                             Intermediate
@@ -905,10 +928,10 @@ const InfiniteSpace = () => {
                         <button
                             onClick={() => { setDifficulty('Advanced'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
                             className={cn(
-                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                "col-span-3 px-2 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] transition-all border-x border-b border-white/10",
                                 difficulty === 'Advanced'
                                     ? "bg-rose-600 text-white border-rose-700"
-                                    : "bg-rose-950 text-rose-400 border-rose-800 hover:bg-rose-900"
+                                    : "bg-rose-950 text-rose-400 border-rose-800/20 hover:bg-rose-900"
                             )}
                         >
                             Advanced
@@ -1648,20 +1671,41 @@ const InfiniteSpace = () => {
                     setIsLeaderboardOpen(false);
                     setIsBattleActive(false);
                     setIsSoloConfigOpen(false);
+                    setSearchParams(prev => {
+                        prev.set('tab', 'problems');
+                        prev.delete('leaderboard');
+                        return prev;
+                    });
                 }}
                 onCodesClick={() => {
                     setActiveTab('codes');
                     setIsLeaderboardOpen(false);
                     setIsBattleActive(false);
                     setIsSoloConfigOpen(false);
+                    setSearchParams(prev => {
+                        prev.set('tab', 'codes');
+                        prev.delete('leaderboard');
+                        return prev;
+                    });
                 }}
                 onChallengesClick={() => {
                     setActiveTab('challenges');
                     setIsLeaderboardOpen(false);
                     setIsBattleActive(false);
                     setIsSoloConfigOpen(false);
+                    setSearchParams(prev => {
+                        prev.set('tab', 'challenges');
+                        prev.delete('leaderboard');
+                        return prev;
+                    });
                 }}
-                onLeaderboardClick={() => setIsLeaderboardOpen(true)}
+                onLeaderboardClick={() => {
+                    setIsLeaderboardOpen(true);
+                    setSearchParams(prev => {
+                        prev.set('leaderboard', 'true');
+                        return prev;
+                    });
+                }}
             />
 
             {/* ─── Problem Detail Modal ─── */}
@@ -1731,145 +1775,145 @@ const InfiniteSpace = () => {
             {/* ─── Global Leaderboard Slide-Up Modal ─── */}
             {isLeaderboardOpen && (
                 <>
-                    <div className="fixed inset-0 z-[140] bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsLeaderboardOpen(false)} />
+                    <div 
+                        className="fixed inset-0 z-[140] bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" 
+                        onClick={() => {
+                            setIsLeaderboardOpen(false);
+                            setSearchParams(prev => {
+                                prev.delete('leaderboard');
+                                return prev;
+                            });
+                        }} 
+                    />
                     <div className="fixed inset-x-0 bottom-0 top-[10%] md:top-[15%] pb-10 z-[150] bg-[#fdf6e3] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] flex flex-col animate-in slide-in-from-bottom-full duration-500 ease-out border-t-4 border-[#1a1a1a]">
-                        
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b-2 border-black/5 shrink-0">
-                            <div>
-                                <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a] flex items-center gap-3">
-                                    <Globe className="w-6 h-6 text-amber-500" />
-                                    Rankings: {leaderboardCategory}
-                                </h2>
-                                <p className="text-[10px] uppercase font-bold tracking-widest text-[#777] mt-1">
-                                    Based on {leaderboardCategory === 'Global' ? 'Solo, PvP & Challenges' : leaderboardCategory + ' Activity'}
-                                </p>
-                            </div>
-                            <button onClick={() => setIsLeaderboardOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors">
-                                <X className="w-5 h-5 text-[#1a1a1a]" />
-                            </button>
-                        </div>
-
-                        {/* Category Selector */}
-                        <div className="flex w-full gap-[1px] bg-black/5 p-[1px] border-b border-black/5">
-                            {['Global', 'Solo', 'PvP', 'Challenges'].map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setLeaderboardCategory(cat as any)}
-                                    className={cn(
-                                        "flex-1 py-2 text-[8px] font-black uppercase tracking-widest transition-colors border",
-                                        leaderboardCategory === cat
-                                            ? "bg-[#1a1a1a] text-amber-400 border-[#1a1a1a]"
-                                            : "bg-white text-slate-500 border-black/10 hover:bg-black/5"
-                                    )}
+                        <div className="flex flex-col h-full bg-white">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b-2 border-black/5 shrink-0">
+                                <div>
+                                    <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a] flex items-center gap-3">
+                                        <Globe className="w-6 h-6 text-amber-500" />
+                                        Rankings: {leaderboardCategory}
+                                    </h2>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-[#777] mt-1">
+                                        Based on {leaderboardCategory === 'Global' ? 'Solo, PvP & Challenges' : leaderboardCategory + ' Activity'}
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        setIsLeaderboardOpen(false);
+                                        setSearchParams(prev => {
+                                            prev.delete('leaderboard');
+                                            return prev;
+                                        });
+                                    }}
+                                    className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors"
                                 >
-                                    {cat}
+                                    <X className="w-5 h-5 text-[#1a1a1a]" />
                                 </button>
-                            ))}
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto custom-scrollbar-brutalist flex flex-col">
-                            {/* Podium Section (2 - 1 - 3) */}
-                            <div className="flex items-end justify-center gap-2 sm:gap-6 px-4 pt-10 pb-6 shrink-0 relative bg-white/50 border-b-2 border-black/5">
-                                {/* 2nd Place */}
-                                {MOCK_LEADERBOARD[1] && (
-                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500 delay-150 relative z-10 w-20 sm:w-24">
-                                        <div className="relative mb-2">
-                                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-slate-200 rounded-full border-2 border-slate-300 shadow-md z-20">
-                                                <Crown className="w-3 h-3 text-slate-500" />
-                                            </div>
-                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-slate-300 bg-white overflow-hidden shadow-lg">
-                                                {MOCK_LEADERBOARD[1].avatar ? <img src={MOCK_LEADERBOARD[1].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-slate-300" />}
-                                            </div>
-                                            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-slate-300 flex items-center justify-center text-white font-black text-xs z-20">
-                                                2
-                                            </div>
-                                        </div>
-                                        <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[1].name}</h3>
-                                        <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-0.5">{MOCK_LEADERBOARD[1].score} PTS</p>
-                                        <div className="w-full h-16 sm:h-20 bg-gradient-to-t from-slate-200 to-slate-100 rounded-t-lg mt-3 border-x-[3px] border-t-[3px] border-slate-300 shadow-inner flex flex-col items-center justify-end pb-2">
-                                             <div className="w-full h-1.5 bg-slate-300/50 mb-0.5" />
-                                             <div className="w-full h-1.5 bg-slate-300/50 mb-0.5" />
-                                             <div className="w-full h-1.5 bg-slate-300/50" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 1st Place */}
-                                {MOCK_LEADERBOARD[0] && (
-                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-12 duration-500 relative z-20 w-24 sm:w-28">
-                                        <div className="relative mb-2">
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center bg-amber-400 rounded-full border-[3px] border-amber-300 shadow-lg z-20 animate-bounce">
-                                                <Crown className="w-4 h-4 text-amber-800" />
-                                            </div>
-                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-xl relative">
-                                                <div className="absolute inset-0 bg-amber-400/20 animate-pulse" />
-                                                {MOCK_LEADERBOARD[0].avatar ? <img src={MOCK_LEADERBOARD[0].avatar} alt="" className="w-full h-full object-cover relative z-10" /> : <User className="w-8 h-8 m-auto mt-4 text-amber-200 relative z-10" />}
-                                            </div>
-                                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-[#1a1a1a] rounded-full border-[3px] border-amber-400 flex items-center justify-center text-amber-400 font-black text-sm z-20 shadow-md">
-                                                1
-                                            </div>
-                                        </div>
-                                        <h3 className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-center text-[#1a1a1a] mt-1 line-clamp-1">{MOCK_LEADERBOARD[0].name}</h3>
-                                        <p className="text-[9px] sm:text-[10px] font-black text-amber-600 mt-0.5">{MOCK_LEADERBOARD[0].score} PTS</p>
-                                        <div className="w-full h-24 sm:h-28 bg-gradient-to-t from-amber-300 to-amber-200 rounded-t-lg mt-3 border-x-4 border-t-4 border-amber-400 shadow-inner flex flex-col items-center justify-end pb-3">
-                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
-                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
-                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
-                                             <div className="w-full h-2 bg-amber-400/40" />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 3rd Place */}
-                                {MOCK_LEADERBOARD[2] && (
-                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-6 duration-500 delay-300 relative z-10 w-20 sm:w-24">
-                                        <div className="relative mb-2">
-                                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-orange-800/80 rounded-full border-2 border-orange-900 shadow-md z-20">
-                                                <Crown className="w-3 h-3 text-orange-200" />
-                                            </div>
-                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-orange-800/80 bg-white overflow-hidden shadow-lg">
-                                                {MOCK_LEADERBOARD[2].avatar ? <img src={MOCK_LEADERBOARD[2].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-orange-900/50" />}
-                                            </div>
-                                            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-orange-900/80 flex items-center justify-center text-white font-black text-xs z-20">
-                                                3
-                                            </div>
-                                        </div>
-                                        <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[2].name}</h3>
-                                        <p className="text-[8px] sm:text-[9px] font-bold text-orange-800/80 mt-0.5">{MOCK_LEADERBOARD[2].score} PTS</p>
-                                        <div className="w-full h-12 sm:h-14 bg-gradient-to-t from-orange-900/40 to-orange-800/30 rounded-t-lg mt-3 border-x-[3px] border-t-[3px] border-orange-900/60 shadow-inner flex flex-col items-center justify-end pb-2">
-                                            <div className="w-full h-1 bg-orange-900/30 mb-0.5" />
-                                            <div className="w-full h-1 bg-orange-900/30 mb-0.5" />
-                                            <div className="w-full h-1 bg-orange-900/30" />
-                                        </div>
-                                    </div>
-                                )}
                             </div>
 
-                            {/* List Section for ranks 4+ */}
-                            <div className="flex-1 flex flex-col gap-[2px] bg-black/5 px-4 sm:px-8 py-6">
-                                {MOCK_LEADERBOARD.slice(3).map((player, idx) => (
-                                    <div key={player.id} className="flex items-center gap-4 p-4 bg-white hover:bg-emerald-50 transition-colors border-2 border-black/5 hover:border-emerald-500 duration-200 group">
-                                        <div className="w-8 shrink-0 flex items-center justify-center font-black text-lg text-slate-400 group-hover:text-emerald-500 transition-colors">
-                                            #{player.rank}
-                                        </div>
-                                        <div className="w-10 h-10 rounded bg-[#1a1a1a] border border-black/10 shrink-0 overflow-hidden flex items-center justify-center">
-                                            {player.avatar ? <img src={player.avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-white/50" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-sm font-black uppercase tracking-tight text-[#1a1a1a] group-hover:text-emerald-600 transition-colors line-clamp-1">
-                                                {player.name}
-                                            </h4>
-                                            <p className="text-[10px] font-bold text-[#777] uppercase tracking-widest mt-0.5 max-w-full truncate">
-                                                @{player.username}
-                                            </p>
-                                        </div>
-                                        <div className="shrink-0 text-right">
-                                            <p className="text-sm font-black text-[#1a1a1a]">{player.score.toLocaleString()}</p>
-                                            <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Points</p>
-                                        </div>
-                                    </div>
+                            {/* Category Selector */}
+                            <div className="flex w-full gap-[1px] bg-black/5 p-[1px] border-b border-black/5">
+                                {['Global', 'Solo', 'PvP', 'Challenges'].map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setLeaderboardCategory(cat as any)}
+                                        className={cn(
+                                            "flex-1 py-2 text-[8px] font-black uppercase tracking-widest transition-colors border",
+                                            leaderboardCategory === cat
+                                                ? "bg-[#1a1a1a] text-amber-400 border-[#1a1a1a]"
+                                                : "bg-white text-slate-500 border-black/10 hover:bg-black/5"
+                                        )}
+                                    >
+                                        {cat}
+                                    </button>
                                 ))}
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto custom-scrollbar-brutalist flex flex-col">
+                                {/* Podium Section (2 - 1 - 3) */}
+                                <div className="flex items-end justify-center gap-2 sm:gap-6 px-4 pt-10 pb-6 shrink-0 relative bg-white/50 border-b-2 border-black/5">
+                                    {/* 2nd Place */}
+                                    {MOCK_LEADERBOARD[1] && (
+                                        <div className="flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500 delay-150 relative z-10 w-20 sm:w-24">
+                                            <div className="relative mb-2">
+                                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-slate-200 rounded-full border-2 border-slate-300 shadow-md z-20">
+                                                    <Crown className="w-3 h-3 text-slate-500" />
+                                                </div>
+                                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-slate-300 bg-white overflow-hidden shadow-lg">
+                                                    {MOCK_LEADERBOARD[1].avatar ? <img src={MOCK_LEADERBOARD[1].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-slate-300" />}
+                                                </div>
+                                                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-slate-300 flex items-center justify-center text-white font-black text-xs z-20">
+                                                    2
+                                                </div>
+                                            </div>
+                                            <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[1].name}</h3>
+                                            <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-0.5">{MOCK_LEADERBOARD[1].score} PTS</p>
+                                        </div>
+                                    )}
+
+                                    {/* 1st Place */}
+                                    {MOCK_LEADERBOARD[0] && (
+                                        <div className="flex flex-col items-center animate-in slide-in-from-bottom-12 duration-500 relative z-20 w-24 sm:w-32 -mt-4">
+                                            <div className="relative mb-3">
+                                                <div className="absolute -top-7 left-1/2 -translate-x-1/2 w-10 h-10 flex items-center justify-center bg-amber-400 rounded-full border-2 border-amber-500 shadow-xl z-20 animate-bounce-slow">
+                                                    <Crown className="w-5 h-5 text-amber-800" />
+                                                </div>
+                                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[4px] border-amber-400 bg-white overflow-hidden shadow-2xl relative">
+                                                    <div className="absolute inset-0 bg-amber-400/10 animate-pulse" />
+                                                    {MOCK_LEADERBOARD[0].avatar ? <img src={MOCK_LEADERBOARD[0].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-10 h-10 m-auto mt-5 text-slate-300" />}
+                                                </div>
+                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-amber-400 rounded-full border-3 border-white flex items-center justify-center text-[#1a1a1a] font-black text-sm z-20 shadow-lg">
+                                                    1
+                                                </div>
+                                            </div>
+                                            <h3 className="text-[12px] sm:text-[14px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1">{MOCK_LEADERBOARD[0].name}</h3>
+                                            <p className="text-[9px] sm:text-[10px] font-black text-amber-600 mt-0.5">{MOCK_LEADERBOARD[0].score} PTS</p>
+                                        </div>
+                                    )}
+
+                                    {/* 3rd Place */}
+                                    {MOCK_LEADERBOARD[2] && (
+                                        <div className="flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500 delay-300 relative z-10 w-20 sm:w-24">
+                                            <div className="relative mb-2">
+                                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-orange-100 rounded-full border-2 border-orange-200 shadow-md z-20">
+                                                    <Crown className="w-3 h-3 text-orange-400" />
+                                                </div>
+                                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-orange-200 bg-white overflow-hidden shadow-lg">
+                                                    {MOCK_LEADERBOARD[2].avatar ? <img src={MOCK_LEADERBOARD[2].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-slate-300" />}
+                                                </div>
+                                                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-orange-200 flex items-center justify-center text-white font-black text-xs z-20">
+                                                    3
+                                                </div>
+                                            </div>
+                                            <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[2].name}</h3>
+                                            <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-0.5">{MOCK_LEADERBOARD[2].score} PTS</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Full List */}
+                                <div className="p-4 space-y-2 pb-20">
+                                    {MOCK_LEADERBOARD.slice(3).map((player) => (
+                                        <div 
+                                            key={player.id} 
+                                            className="flex items-center gap-4 p-3 bg-white border-2 border-black/5 hover:border-black/10 transition-colors"
+                                        >
+                                            <span className="w-6 text-center font-black text-slate-400 text-sm">#{player.rank}</span>
+                                            <div className="w-10 h-10 rounded-none bg-slate-100 flex items-center justify-center overflow-hidden border border-black/5">
+                                                {player.avatar ? <img src={player.avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-300" />}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-xs font-black uppercase tracking-tight text-[#1a1a1a]">{player.name}</h4>
+                                                <p className="text-[9px] font-bold text-slate-400">@{player.username}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-sm font-black text-[#1a1a1a]">{player.score}</span>
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">PTS</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

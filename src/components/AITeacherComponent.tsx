@@ -522,6 +522,7 @@ const AITeacherComponent = () => {
                             extensions={[python(), highlightField]}
                             theme="dark"
                             readOnly={true}
+                            editable={false}
                             className="text-sm h-full"
                         />
 
