@@ -141,27 +141,54 @@ const AITeacherComponent = () => {
         setActiveHighlightIndex(-1);
     };
 
+    const warmupAudio = () => {
+        // A silent utterance to "warm up" the speech synthesis engine and claim the user gesture context
+        const utterance = new SpeechSynthesisUtterance("");
+        utterance.volume = 0;
+        window.speechSynthesis.speak(utterance);
+    };
+
     const speakAsync = (text: string, signal: AbortSignal) => {
         return new Promise<void>((resolve) => {
             if (signal.aborted || !text) return resolve();
 
-            const cleanText = stripMarkdown(text);
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.rate = 1.02; // Slightly faster for modern feel
+            const speak = () => {
+                const cleanText = stripMarkdown(text);
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.rate = 1.02;
 
-            const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.startsWith("en")) || voices[0];
-            if (preferredVoice) utterance.voice = preferredVoice;
+                const voices = window.speechSynthesis.getVoices();
+                // Filter for high quality voices if possible
+                const preferredVoice = voices.find(v => (v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")) 
+                    || voices.find(v => v.lang.startsWith("en"))
+                    || voices[0];
+                
+                if (preferredVoice) utterance.voice = preferredVoice;
 
-            utterance.onstart = () => setIsSpeaking(true);
-            utterance.onend = () => {
-                setIsSpeaking(false);
-                resolve();
+                utterance.onstart = () => setIsSpeaking(true);
+                utterance.onend = () => {
+                    setIsSpeaking(false);
+                    resolve();
+                };
+                utterance.onerror = (e) => {
+                    console.error("SpeechSynthesis Error:", e);
+                    setIsSpeaking(false);
+                    resolve();
+                };
+
+                utteranceRef.current = utterance;
+                window.speechSynthesis.speak(utterance);
             };
-            utterance.onerror = () => resolve();
 
-            utteranceRef.current = utterance;
-            window.speechSynthesis.speak(utterance);
+            // If voices aren't loaded yet, wait or just try
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    speak();
+                    window.speechSynthesis.onvoiceschanged = null;
+                };
+            } else {
+                speak();
+            }
 
             signal.addEventListener('abort', () => {
                 window.speechSynthesis.cancel();
@@ -243,10 +270,12 @@ const AITeacherComponent = () => {
     };
 
     const handleCategoryClick = (catId: string, catName: string) => {
+        warmupAudio();
         fetchLesson(`Give me a ${catName} lesson.`, catId);
     };
 
     const handlePlayExplanation = () => {
+        warmupAudio();
         if (lesson) playInteractiveLesson(lesson);
     };
 
