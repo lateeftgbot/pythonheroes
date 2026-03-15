@@ -1643,9 +1643,24 @@ const InfiniteSpace = () => {
                     codes: allCodePredictions.length,
                     battles: battleChallenges.length
                 }}
-                onProblemsClick={() => setActiveTab('problems')}
-                onCodesClick={() => setActiveTab('codes')}
-                onChallengesClick={() => setActiveTab('challenges')}
+                onProblemsClick={() => {
+                    setActiveTab('problems');
+                    setIsLeaderboardOpen(false);
+                    setIsBattleActive(false);
+                    setIsSoloConfigOpen(false);
+                }}
+                onCodesClick={() => {
+                    setActiveTab('codes');
+                    setIsLeaderboardOpen(false);
+                    setIsBattleActive(false);
+                    setIsSoloConfigOpen(false);
+                }}
+                onChallengesClick={() => {
+                    setActiveTab('challenges');
+                    setIsLeaderboardOpen(false);
+                    setIsBattleActive(false);
+                    setIsSoloConfigOpen(false);
+                }}
                 onLeaderboardClick={() => setIsLeaderboardOpen(true)}
             />
 
