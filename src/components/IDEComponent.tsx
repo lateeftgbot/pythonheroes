@@ -252,13 +252,13 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
     };
 
     return (
-        <div className="flex flex-col h-full p-4 lg:p-8 lg:pb-0">
+        <div className="flex flex-col h-full p-4 lg:p-8 lg:pb-0 bg-[#fdf6e3]">
             {/* Header */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div>
-                        <p className="font-mono text-primary text-sm mb-1">{"// Python IDE"}</p>
-                        <h1 className="text-3xl font-bold text-foreground">Practice Playground</h1>
+                        <p className="font-black text-emerald-600 text-[10px] mb-1 uppercase tracking-widest italic">{"// SYSTEM_PLAYGROUND"}</p>
+                        <h1 className="text-3xl font-black text-black uppercase tracking-tighter italic">Practice Arena</h1>
                     </div>
                 </div>
 
@@ -267,32 +267,32 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                         onClick={() => setViewMode(viewMode === "editor" ? "console" : "editor")}
                         variant="outline"
                         size="sm"
-                        className="font-mono bg-green-600 text-white hover:bg-green-500 border-green-600 shadow-sm"
+                        className="font-black bg-white text-black hover:bg-black/5 border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all uppercase text-[10px] tracking-widest h-9 px-4"
                     >
                         {viewMode === "editor" ? "View Console" : "View Editor"}
                     </Button>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9" title="Save Project">
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white text-black hover:bg-black/5" title="Save Project">
                                 <FolderPlus className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={handleSaveToDevice}>
+                        <DropdownMenuContent align="end" className="rounded-none border-2 border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                            <DropdownMenuItem onClick={handleSaveToDevice} className="rounded-none font-black text-[10px] uppercase tracking-widest p-2 focus:bg-emerald-500 focus:text-white transition-colors">
                                 <Download className="mr-2 h-4 w-4" /> Save to Device
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleSaveToDatabaseRequest}>
+                            <DropdownMenuItem onClick={handleSaveToDatabaseRequest} className="rounded-none font-black text-[10px] uppercase tracking-widest p-2 focus:bg-emerald-500 focus:text-white transition-colors">
                                 <Database className="mr-2 h-4 w-4" /> Save to Database
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <Button variant="outline" size="sm" onClick={handleViewProjects} className="font-mono h-9">
-                        <FolderOpen className="w-4 h-4 mr-2" /> View Projects
+                    <Button variant="outline" size="sm" onClick={handleViewProjects} className="font-black h-9 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white text-black hover:bg-black/5 uppercase text-[10px] tracking-widest px-4 transition-all">
+                        <FolderOpen className="w-4 h-4 mr-2" /> Projects
                     </Button>
 
-                    <Button onClick={resetCode} variant="outline" size="sm" className="font-mono">
+                    <Button onClick={resetCode} variant="outline" size="sm" className="font-black h-9 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white text-black hover:bg-black/5 uppercase text-[10px] tracking-widest px-4 transition-all">
                         <RotateCcw className="w-4 h-4 mr-2" /> Reset
                     </Button>
 
@@ -301,9 +301,9 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                             onClick={onBackToLearning}
                             variant="outline"
                             size="sm"
-                            className="font-mono bg-purple-600 text-white hover:bg-purple-500 border-purple-600 shadow-sm"
+                            className="font-black h-9 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white text-purple-600 hover:bg-black/5 uppercase text-[10px] tracking-widest px-4 transition-all"
                         >
-                            <BookOpen className="w-4 h-4 mr-2" /> Back to Learning
+                            <BookOpen className="w-4 h-4 mr-2" /> Exit Lab
                         </Button>
                     )}
 
@@ -312,7 +312,7 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                             onClick={stopExecution}
                             size="sm"
                             variant="destructive"
-                            className="font-mono"
+                            className="h-9 rounded-none border-2 border-black bg-rose-500 text-white font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase text-[10px] tracking-[0.2em] px-6"
                         >
                             <Square className="w-4 h-4 mr-2 fill-current" />
                             Stop
@@ -322,10 +322,10 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                             onClick={runCode}
                             disabled={!pyodideReady}
                             size="sm"
-                            className="bg-primary hover:bg-primary/90 font-mono"
+                            className="h-9 rounded-none border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase text-[10px] tracking-[0.2em] px-6 disabled:opacity-50 disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-none"
                         >
-                            <Play className="w-4 h-4 mr-2" />
-                            Run Code
+                            <Play className="w-4 h-4 mr-2 fill-current" />
+                            Run Project
                         </Button>
                     )}
                 </div>
@@ -334,14 +334,14 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
             {/* Editor/Console Container */}
             <div className="flex-1 min-h-0 relative overflow-hidden">
                 {/* Editor Section */}
-                <div className={`absolute inset-0 flex flex-col glass-card rounded-xl border border-border overflow-hidden transition-all duration-500 ease-in-out ${viewMode === "editor"
+                <div className={`absolute inset-0 flex flex-col bg-white rounded-none border-2 border-black overflow-hidden transition-all duration-500 ease-in-out shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${viewMode === "editor"
                     ? "opacity-100 translate-x-0 pointer-events-auto"
                     : "opacity-0 -translate-x-full pointer-events-none"
                     }`}>
-                    <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+                    <div className="flex items-center justify-between p-4 border-b-2 border-black bg-white">
                         <div className="flex items-center gap-2">
-                            <Code2 className="w-5 h-5 text-primary" />
-                            <h2 className="font-semibold text-foreground">Editor</h2>
+                            <Code2 className="w-5 h-5 text-black" />
+                            <h2 className="font-black text-black uppercase tracking-tighter italic">Source Editor</h2>
                         </div>
                         <div className="flex items-center gap-2">
                             {hasRunCode && (
@@ -349,7 +349,7 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                                     onClick={() => setViewMode("console")}
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-2 text-xs font-mono text-primary border-primary/20 hover:bg-primary/10 transition-colors"
+                                    className="h-8 px-3 text-[10px] font-black text-black border-2 border-black rounded-none hover:bg-black/5 uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
                                 >
                                     <Database className="w-3 h-3 mr-1" /> View Console
                                 </Button>
@@ -358,7 +358,7 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                                 onClick={() => setCode("")}
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-2 text-xs font-mono text-muted-foreground hover:text-destructive transition-colors"
+                                className="h-8 px-3 text-[10px] font-black text-rose-600 hover:bg-rose-50 rounded-none uppercase tracking-widest"
                             >
                                 <Trash2 className="w-3 h-3 mr-1" /> Clear
                             </Button>
@@ -377,35 +377,35 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
                     </div>
 
                     {/* Keyboard Shortcut Hint */}
-                    <div className="p-2 border-t border-border bg-muted/20 text-[10px] text-muted-foreground font-mono text-center">
-                        💡 Press <kbd className="px-1 py-0.5 bg-muted rounded border border-border">F5</kbd> to run code
+                    <div className="p-2 border-t-2 border-black bg-[#fdf6e3] text-[9px] text-black font-black text-center uppercase tracking-widest italic">
+                        💡 SYSTEM_HINT: Press <kbd className="px-1.5 py-0.5 bg-black text-white rounded-none border border-black text-[8px]">F5</kbd> to execute current buffer
                     </div>
                 </div>
 
                 {/* Console Section */}
-                <div className={`absolute inset-0 flex flex-col glass-card rounded-xl border border-border overflow-hidden transition-all duration-500 ease-in-out ${viewMode === "console"
+                <div className={`absolute inset-0 flex flex-col bg-white rounded-none border-2 border-black overflow-hidden transition-all duration-500 ease-in-out shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${viewMode === "console"
                     ? "opacity-100 translate-x-0 pointer-events-auto"
                     : "opacity-0 translate-x-full pointer-events-none"
                     }`}>
-                    <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+                    <div className="flex items-center justify-between p-4 border-b-2 border-black bg-white">
                         <div className="flex items-center gap-2">
-                            <Database className="w-5 h-5 text-primary" />
-                            <h2 className="font-semibold text-foreground">Console Output</h2>
+                            <Database className="w-5 h-5 text-black" />
+                            <h2 className="font-black text-black uppercase tracking-tighter italic">Process Console</h2>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
                                 onClick={() => setViewMode("editor")}
                                 variant="outline"
                                 size="sm"
-                                className="h-7 px-3 text-xs font-mono text-primary border-primary/20 hover:bg-primary/10 transition-colors"
+                                className="h-8 px-3 text-[10px] font-black text-black border-2 border-black rounded-none hover:bg-black/5 uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
                             >
-                                <Code2 className="w-3 h-3 mr-1" /> Back to Editor
+                                <Code2 className="w-3 h-3 mr-1" /> Source View
                             </Button>
                             <Button
                                 onClick={() => setOutput("")}
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-2 text-xs font-mono text-muted-foreground hover:text-primary transition-colors"
+                                className="h-8 px-3 text-[10px] font-black text-slate-500 hover:text-black rounded-none uppercase tracking-widest"
                             >
                                 Clear
                             </Button>
@@ -414,65 +414,117 @@ const IDEComponent = ({ onBackToLearning, showBackButton = true }: IDEComponentP
 
                     <div
                         ref={consoleEndRef}
-                        className="flex-1 bg-[#0f0f0f] text-[#d4d4d4] font-mono text-sm p-6 overflow-auto"
+                        className="flex-1 bg-black text-emerald-400 font-mono text-sm p-6 overflow-auto scrollbar-hide selection:bg-emerald-500 selection:text-black"
                     >
-                        <pre className="whitespace-pre-wrap break-words leading-relaxed font-mono">
-                            {output || ">>> Output will appear here...\n"}
+                        <pre className="whitespace-pre-wrap break-words leading-relaxed font-bold">
+                            {output || ">>> SYSTEM_READY. Awaiting execution signal...\n"}
                         </pre>
                         {!pyodideReady && (
-                            <div className="flex items-center gap-2 text-primary/60 text-sm mt-4 italic">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Initiating Python kernel...
+                            <div className="flex items-center gap-3 text-emerald-500/60 text-xs mt-4 font-black uppercase tracking-widest italic animate-pulse">
+                                <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
+                                Mounting virtual environment...
                             </div>
                         )}
                         {isRunning && (
-                            <div className="flex items-center gap-2 text-green-500/60 text-sm mt-2 italic">
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                                Executing...
+                            <div className="flex items-center gap-3 text-emerald-500 text-xs mt-4 font-black uppercase tracking-widest italic">
+                                <div className="w-2 h-2 bg-emerald-500 animate-ping rounded-none" />
+                                Processing script execution...
                             </div>
                         )}
                     </div>
 
                     {/* Keyboard Shortcut Hint */}
-                    <div className="p-2 border-t border-border bg-muted/20 text-[10px] text-muted-foreground font-mono text-center">
-                        💡 Press <kbd className="px-1 py-0.5 bg-muted rounded border border-border">Esc</kbd> for editor
+                    <div className="p-2 border-t-2 border-black bg-[#fdf6e3] text-[9px] text-black font-black text-center uppercase tracking-widest italic">
+                        💡 SYSTEM_HINT: Press <kbd className="px-1.5 py-0.5 bg-black text-white rounded-none border border-black text-[8px]">Esc</kbd> to return to source
                     </div>
                 </div>
             </div>
 
             {/* Dialogs */}
             <Dialog open={isSaveOpen} onOpenChange={setIsSaveOpen}>
-                <DialogContent>
-                    <DialogHeader><DialogTitle>Save to Database</DialogTitle></DialogHeader>
-                    <div className="py-4">
-                        <Label>Project Title</Label>
-                        <Input value={projectTitle} onChange={(e) => setProjectTitle(e.target.value)} placeholder="Project name..." />
+                <DialogContent className="rounded-none border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] bg-white p-6">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black uppercase tracking-tighter italic text-black">
+                            Archive Project
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-6">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-black mb-2 block">
+                            Project designation
+                        </Label>
+                        <Input 
+                            value={projectTitle} 
+                            onChange={(e) => setProjectTitle(e.target.value)} 
+                            placeholder="Enter project name..." 
+                            className="rounded-none border-2 border-black focus-visible:ring-0 focus-visible:border-emerald-500 font-bold text-black bg-white uppercase text-xs h-11 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]"
+                        />
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSaveOpen(false)}>Cancel</Button>
-                        <Button onClick={confirmSaveToDatabase} disabled={isSaving}>Save Project</Button>
+                    <DialogFooter className="gap-3">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsSaveOpen(false)}
+                            className="rounded-none border-2 border-black font-black uppercase tracking-widest text-[10px] h-11 px-6 hover:bg-black/5"
+                        >
+                            Abort
+                        </Button>
+                        <Button 
+                            onClick={confirmSaveToDatabase} 
+                            disabled={isSaving}
+                            className="rounded-none border-2 border-black bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] h-11 px-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-50"
+                        >
+                            Commit to Database
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-                <DialogContent className="max-w-md">
-                    <DialogHeader><DialogTitle>My Projects</DialogTitle></DialogHeader>
-                    <ScrollArea className="h-[300px] pr-4">
-                        {isLoadingProjects ? <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div> :
-                            savedProjects.length === 0 ? <div className="text-center p-8">No projects fund</div> :
-                                <div className="space-y-2">
-                                    {savedProjects.map(p => (
-                                        <div key={p.id} className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer flex justify-between items-center" onClick={() => { setCode(p.code); setIsViewOpen(false); setViewMode("editor"); }}>
+                <DialogContent className="max-w-md rounded-none border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] bg-white p-6">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black uppercase tracking-tighter italic text-black">
+                            Stored Projects
+                        </DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="h-[300px] mt-4 pr-4">
+                        {isLoadingProjects ? (
+                            <div className="flex justify-center p-12">
+                                <Loader2 className="animate-spin text-black w-8 h-8" />
+                            </div>
+                        ) : savedProjects.length === 0 ? (
+                            <div className="text-center p-12 bg-black/5 border-2 border-dashed border-black/20">
+                                <p className="font-black uppercase tracking-widest text-[10px] text-slate-400 italic">
+                                    // NO_RECORDS_FOUND
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {savedProjects.map(p => (
+                                    <div 
+                                        key={p.id} 
+                                        className="p-4 border-2 border-black hover:border-emerald-500 bg-white group cursor-pointer transition-all hover:bg-black/[0.02] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] relative overflow-hidden active:translate-x-[1px] active:translate-y-[1px] active:shadow-none" 
+                                        onClick={() => { setCode(p.code); setIsViewOpen(false); setViewMode("editor"); }}
+                                    >
+                                        <div className="flex justify-between items-center relative z-10">
                                             <div>
-                                                <h4 className="font-semibold text-sm">{p.title}</h4>
-                                                <p className="text-[10px] text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</p>
+                                                <h4 className="font-black text-xs uppercase tracking-tight text-black group-hover:text-emerald-600 transition-colors">
+                                                    {p.title}
+                                                </h4>
+                                                <p className="text-[9px] font-mono text-slate-400 mt-1 uppercase">
+                                                    STAMP: {new Date(p.updated_at).toLocaleDateString()}
+                                                </p>
                                             </div>
-                                            <Button size="sm" variant="ghost">Load</Button>
+                                            <Button 
+                                                size="sm" 
+                                                variant="outline"
+                                                className="h-8 rounded-none border-2 border-black font-black uppercase text-[9px] tracking-widest px-3 hover:bg-emerald-500 hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                            >
+                                                LOAD
+                                            </Button>
                                         </div>
-                                    ))}
-                                </div>
-                        }
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </ScrollArea>
                 </DialogContent>
             </Dialog>

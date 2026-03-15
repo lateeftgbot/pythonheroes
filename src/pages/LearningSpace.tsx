@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import { BookOpen, FileText, Video, Link as LinkIcon, ExternalLink, Download, ArrowLeft, Code2, PlusCircle, Layout, Search, XCircle, Library, Layers, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import IDEComponent from "@/components/IDEComponent";
 import TypewriterFooter from "@/components/TypewriterFooter";
@@ -61,10 +61,12 @@ const LearningSpace = () => {
     const { user, isLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
+
 
     const [materials, setMaterials] = useState<Material[]>([]);
     const [isLoadingMaterials, setIsLoadingMaterials] = useState(true);
-    const [view, setView] = useState<"materials" | "ide" | "courses">("materials");
+    const [view, setView] = useState<"materials" | "ide" | "courses">((searchParams.get("view") as any) || "materials");
     const [courseTab, setCourseTab] = useState<"courses" | "catalog" | "registered">("courses");
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
@@ -369,45 +371,45 @@ const LearningSpace = () => {
 
     if (isLoading || !user) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-slate-800 border-t-emerald-500 rounded-full animate-spin"></div>
+            <div className="min-h-screen bg-[#fdf6e3] flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-black/10 border-t-emerald-500 rounded-none animate-spin"></div>
             </div>
         );
     }
 
     return (
-        <div className="h-screen w-screen bg-slate-900 overflow-hidden flex flex-col text-white">
+        <div className="h-screen w-screen bg-[#fdf6e3] overflow-hidden flex flex-col text-black selection:bg-emerald-500/30">
             <Navbar />
 
             <main className="flex-1 pt-16 relative flex flex-col min-h-0 overflow-hidden">
                 <div className="flex-1 flex min-h-0 gap-0">
                     {/* Sidebar */}
-                    <div className="hidden lg:flex flex-col w-56 bg-slate-800 border-r border-slate-700/50 p-4 h-full overflow-y-auto shrink-0 scrollbar-hide">
+                    <div className="hidden lg:flex flex-col w-56 bg-white border-r-2 border-black/10 p-4 h-full overflow-y-auto shrink-0 scrollbar-hide">
                         <div className="mb-6">
-                            <h3 className="font-mono text-[9px] text-emerald-500 mb-2 uppercase tracking-widest opacity-70">{"// Statistics"}</h3>
+                            <h3 className="font-mono text-[9px] text-emerald-600 mb-2 uppercase tracking-widest font-black">{"// Statistics"}</h3>
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-baseline justify-between">
-                                    <span className="text-[10px] text-slate-400 font-mono">Academy</span>
-                                    <span className="text-lg font-bold text-white">{rawMaterials.length}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono font-bold">Academy</span>
+                                    <span className="text-lg font-black text-black">{rawMaterials.length}</span>
                                 </div>
                                 <div className="flex items-baseline justify-between mt-1">
-                                    <span className="text-[10px] text-slate-400 font-mono">Catalog</span>
-                                    <span className="text-lg font-bold text-white">{binaryMaterials.length}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono font-bold">Catalog</span>
+                                    <span className="text-lg font-black text-black">{binaryMaterials.length}</span>
                                 </div>
                                 <div className="flex items-baseline justify-between mt-1">
-                                    <span className="text-[10px] text-slate-400 font-mono">Enrolled</span>
-                                    <span className="text-lg font-bold text-emerald-500">{registeredIds.size}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono font-bold">Enrolled</span>
+                                    <span className="text-lg font-black text-emerald-600">{registeredIds.size}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <h3 className="font-mono text-[9px] text-muted-foreground mb-2 uppercase tracking-widest opacity-70">{"// Navigation"}</h3>
+                        <div className="space-y-1">
+                            <h3 className="font-mono text-[9px] text-slate-400 mb-2 uppercase tracking-widest font-black">{"// Navigation"}</h3>
                             <div
                                 onClick={handleBackToLearning}
                                 className={cn(
-                                    "p-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2",
-                                    view === "materials" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-sm" : "border-transparent hover:bg-slate-700/50 text-slate-300"
+                                    "p-2 rounded-none border-2 transition-all cursor-pointer flex items-center gap-2",
+                                    view === "materials" ? "bg-emerald-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "border-transparent hover:bg-black/5 text-slate-600"
                                 )}
                             >
                                 <Layout className="w-3.5 h-3.5" />
@@ -416,8 +418,8 @@ const LearningSpace = () => {
                             <div
                                 onClick={handleOpenCourses}
                                 className={cn(
-                                    "p-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2",
-                                    view === "courses" && courseTab === "courses" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-sm" : "border-transparent hover:bg-slate-700/50 text-slate-300"
+                                    "p-2 rounded-none border-2 transition-all cursor-pointer flex items-center gap-2",
+                                    view === "courses" && courseTab === "courses" ? "bg-emerald-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "border-transparent hover:bg-black/5 text-slate-600"
                                 )}
                             >
                                 <Library className="w-3.5 h-3.5" />
@@ -426,8 +428,8 @@ const LearningSpace = () => {
                             <div
                                 onClick={handleOpenCatalog}
                                 className={cn(
-                                    "p-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2",
-                                    view === "courses" && courseTab === "catalog" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-sm" : "border-transparent hover:bg-slate-700/50 text-slate-300"
+                                    "p-2 rounded-none border-2 transition-all cursor-pointer flex items-center gap-2",
+                                    view === "courses" && courseTab === "catalog" ? "bg-emerald-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "border-transparent hover:bg-black/5 text-slate-600"
                                 )}
                             >
                                 <Layers className="w-3.5 h-3.5" />
@@ -436,8 +438,8 @@ const LearningSpace = () => {
                             <div
                                 onClick={handleOpenRegistered}
                                 className={cn(
-                                    "p-2 rounded-lg border transition-all cursor-pointer flex items-center gap-2",
-                                    view === "courses" && courseTab === "registered" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-sm" : "border-transparent hover:bg-slate-700/50 text-slate-300"
+                                    "p-2 rounded-none border-2 transition-all cursor-pointer flex items-center gap-2",
+                                    view === "courses" && courseTab === "registered" ? "bg-emerald-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "border-transparent hover:bg-black/5 text-slate-600"
                                 )}
                             >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -448,7 +450,7 @@ const LearningSpace = () => {
                             {registeredMaterials.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-slate-700/50 animate-in fade-in slide-in-from-top-2 duration-500">
                                     <div className="flex justify-center mb-4">
-                                        <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full text-center">
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600 bg-white border-2 border-black px-4 py-1.5 rounded-none text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                                             Enrolled Courses
                                         </h4>
                                     </div>
@@ -460,17 +462,17 @@ const LearningSpace = () => {
                                                     setActiveDashboardMaterial(material);
                                                     setView('materials');
                                                 }}
-                                                className="group flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-emerald-500/5 cursor-pointer transition-all border border-transparent hover:border-emerald-500/15 hover:shadow-sm"
+                                                className="group flex items-center gap-2.5 p-2.5 rounded-none hover:bg-emerald-500/5 cursor-pointer transition-all border-2 border-transparent hover:border-black hover:bg-white hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                             >
-                                                <div className={cn("w-1.5 h-1.5 rounded-full bg-emerald-500/50 group-hover:bg-emerald-500 shrink-0 transition-colors")} />
-                                                <span className="text-[11px] font-bold text-slate-400 group-hover:text-white truncate transition-colors flex-1">
+                                                <div className={cn("w-2 h-2 rounded-none bg-emerald-500/30 group-hover:bg-emerald-500 shrink-0 transition-colors border border-black/10")} />
+                                                <span className="text-[11px] font-black text-slate-500 group-hover:text-black truncate transition-colors flex-1 uppercase tracking-tight">
                                                     {material.title}
                                                 </span>
                                                 <span className={cn(
-                                                    "text-[9px] font-black font-mono shrink-0 px-1.5 py-0.5 rounded-full",
+                                                    "text-[9px] font-black font-mono shrink-0 px-1.5 py-0.5 rounded-none border-2",
                                                     activeDashboardMaterial?._id === material._id
-                                                        ? "text-emerald-500 bg-emerald-500/10 border border-emerald-500/20"
-                                                        : "text-slate-500 bg-slate-700/50"
+                                                        ? "text-emerald-600 bg-white border-black"
+                                                        : "text-slate-400 bg-slate-50 border-black/5"
                                                 )}>
                                                     {activeDashboardMaterial?._id === material._id ? `${readingProgress}%` : "0%"}
                                                 </span>
@@ -482,8 +484,8 @@ const LearningSpace = () => {
                         </div>
 
                         <div className="mt-auto pt-6 opacity-40">
-                            <div className="p-3 rounded-xl bg-slate-700/20 border border-slate-700/50">
-                                <p className="text-[9px] font-mono text-slate-500 leading-tight">
+                            <div className="p-3 rounded-none bg-white border-2 border-black/10">
+                                <p className="text-[9px] font-mono text-slate-400 leading-tight font-bold">
                                     {"// status_check: active\n// layer: persistent"}
                                 </p>
                             </div>
@@ -498,45 +500,45 @@ const LearningSpace = () => {
                             view === "materials" ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-full absolute inset-0 pointer-events-none"
                         )}>
                             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
-                                <div className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md px-5 py-4 sm:px-10 sm:py-6 lg:px-16 border-b border-white/5">
+                                <div className="sticky top-0 z-30 bg-[#fdf6e3]/95 backdrop-blur-md px-5 py-4 sm:px-10 sm:py-6 lg:px-16 border-b-2 border-black/10">
                                     <div className="flex items-center gap-3 sm:gap-6 shrink-0 -ml-1 sm:-ml-2">
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => navigate("/dashboard")}
-                                            className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl hover:bg-emerald-500/10 text-emerald-500 transition-all border border-transparent hover:border-emerald-500/20"
+                                            className="h-8 w-8 sm:h-10 sm:w-10 rounded-none hover:bg-black/5 text-black transition-all border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                         >
                                             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                                         </Button>
 
                                         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                                                <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-500" />
+                                            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-none bg-white flex items-center justify-center border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2 sm:gap-3">
-                                                    <h1 className="text-sm sm:text-2xl font-black tracking-tight truncate max-w-[120px] sm:max-w-none text-white">
-                                                        {activeDashboardMaterial ? activeDashboardMaterial.title : "Your Personal Library"}
+                                                    <h1 className="text-sm sm:text-2xl font-black tracking-tighter truncate max-w-[120px] sm:max-w-none text-black uppercase">
+                                                        {activeDashboardMaterial ? activeDashboardMaterial.title : "Library"}
                                                     </h1>
                                                     {activeDashboardMaterial && (
-                                                        <span className="text-[9px] sm:text-xs font-black font-mono text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 sm:px-2.5 py-0.5 rounded-full">{readingProgress}%</span>
+                                                        <span className="text-[9px] sm:text-xs font-black font-mono text-emerald-600 bg-white border-2 border-black px-1.5 sm:px-2.5 py-0.5 rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">{readingProgress}%</span>
                                                     )}
                                                 </div>
                                                 <div className="hidden sm:flex items-center gap-2 mt-0.5">
-                                                    <span className="font-mono text-emerald-500 text-[10px] opacity-70">
+                                                    <span className="font-mono text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                                                         {activeDashboardMaterial ? `// viewing: ${activeDashboardMaterial.type}` : "// active_library: ready"}
                                                     </span>
-                                                    <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-none border border-black/10 animate-pulse" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Long Horizontal Progress Bar */}
                                         {activeDashboardMaterial && (
-                                            <div className="hidden sm:flex items-center gap-3 flex-1 mx-4 bg-slate-800 border border-slate-700/60 rounded-xl px-4 py-2.5 shadow-inner">
-                                                <div className="flex-1 h-3 bg-slate-700 rounded-full overflow-hidden border border-slate-600 shadow-sm">
+                                            <div className="hidden sm:flex items-center gap-3 flex-1 mx-4 bg-white border-2 border-black rounded-none px-4 py-2.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                                <div className="flex-1 h-3 bg-slate-100 rounded-none overflow-hidden border border-black/10">
                                                     <div
-                                                        className="h-full bg-gradient-to-r from-emerald-500/80 to-emerald-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(16,185,129,0.25)]"
+                                                        className="h-full bg-emerald-500 rounded-none transition-all duration-300 ease-out"
                                                         style={{ width: `${readingProgress}%` }}
                                                     />
                                                 </div>
@@ -548,7 +550,7 @@ const LearningSpace = () => {
                                                 <Button
                                                     variant="outline"
                                                     onClick={handleBackToList}
-                                                    className="h-7 px-2.5 sm:h-10 sm:px-6 border-border font-black text-[8px] sm:text-[10px] tracking-widest rounded-lg sm:rounded-xl uppercase hover:bg-muted/50"
+                                                    className="h-7 px-2.5 sm:h-10 sm:px-6 border-2 border-black font-black text-[8px] sm:text-[10px] tracking-widest rounded-none uppercase hover:bg-black/5 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                                                 >
                                                     <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                                     Library
@@ -556,7 +558,7 @@ const LearningSpace = () => {
                                             )}
                                             <Button
                                                 onClick={handleCodeNow}
-                                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-lg h-7 px-2.5 sm:h-10 sm:px-6 rounded-lg sm:rounded-xl transform active:scale-95 transition-all text-[10px] sm:text-sm tracking-wide"
+                                                className="bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-black shadow-[4px_4px_0px_0px_rgba(16,185,129,1)] h-7 px-2.5 sm:h-10 sm:px-6 rounded-none transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all text-[10px] sm:text-sm tracking-widest uppercase border-2 border-black"
                                             >
                                                 CODE NOW
                                             </Button>
@@ -713,18 +715,18 @@ epochs: 100/100
                                     ) : registeredMaterials.length > 0 ? (
                                         /* State 2: Personal Library Grid */
                                         <div className="flex-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-500">
-                                            <div className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-sm -mx-5 px-5 py-4 mb-6 border-b border-white/5">
-                                                <div className="p-3 sm:p-4 bg-slate-800/80 rounded-xl border border-emerald-500/20 relative overflow-hidden flex flex-col sm:flex-row items-center gap-3 sm:gap-4 shadow-lg">
+                                            <div className="sticky top-0 z-20 bg-[#fdf6e3]/90 backdrop-blur-sm -mx-5 px-5 py-4 mb-6 border-b-2 border-black/10">
+                                                <div className="p-3 sm:p-4 bg-white rounded-none border-2 border-black relative overflow-hidden flex flex-col sm:flex-row items-center gap-3 sm:gap-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                                                     <div className="absolute top-0 right-0 p-3 opacity-5 pointer-events-none text-emerald-500">
                                                         <CheckCircle2 className="w-24 h-24" />
                                                     </div>
-                                                    <div className="shrink-0 w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
-                                                        <Layout className="w-4 h-4 text-emerald-500" />
+                                                    <div className="shrink-0 w-8 h-8 rounded-none bg-white flex items-center justify-center border-2 border-black">
+                                                        <Layout className="w-4 h-4 text-black" />
                                                     </div>
                                                     <div className="flex-1 text-center sm:text-left z-10">
-                                                        <h2 className="text-sm sm:text-base font-black tracking-tight text-white uppercase italic">Your Personal Library</h2>
+                                                        <h2 className="text-sm sm:text-base font-black tracking-tighter text-black uppercase italic">Personal Hub</h2>
                                                         <div className="flex items-center gap-3 justify-center sm:justify-start mt-0.5">
-                                                            <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">{registeredMaterials.length} ENROLLED</span>
+                                                            <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest bg-white px-1.5 py-0.5 rounded-none border border-black/20">{registeredMaterials.length} ENROLLED</span>
                                                             <span className="w-1 h-1 rounded-full bg-emerald-500/40" />
                                                             <span className="text-[8px] font-mono text-slate-500 opacity-60">SYSTEM_READY</span>
                                                         </div>
@@ -737,63 +739,63 @@ epochs: 100/100
                                                     <div
                                                         key={`dash-${material._id}`}
                                                         onClick={() => setActiveDashboardMaterial(material)}
-                                                        className="bg-slate-800/50 rounded-xl p-4 sm:p-5 border border-slate-700/30 hover:border-emerald-500/50 transition-all group cursor-pointer flex flex-col shadow-sm hover:shadow-xl relative overflow-hidden hover:-translate-y-1 duration-300"
+                                                        className="bg-white rounded-none p-4 sm:p-5 border-2 border-black hover:border-emerald-500 transition-all group cursor-pointer flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden hover:-translate-x-1 hover:-translate-y-1 duration-300"
                                                     >
                                                         <div className="flex justify-between items-start mb-4">
                                                             <div className={cn(
-                                                                "p-2.5 rounded-lg border transition-all group-hover:scale-110",
+                                                                "p-2.5 rounded-none border-2 transition-all group-hover:bg-emerald-500 group-hover:text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                                                 getTypeColor(material.type)
                                                             )}>
                                                                 {getTypeIcon(material.type)}
                                                             </div>
-                                                            <div className="text-[9px] font-mono text-emerald-500 font-black uppercase tracking-widest bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10">
+                                                            <div className="text-[9px] font-mono text-emerald-600 font-black uppercase tracking-widest bg-white px-2 py-1 rounded-none border border-black/10">
                                                                 ACTIVE
                                                             </div>
                                                         </div>
-                                                        <h3 className="font-black text-base text-white mb-1.5 group-hover:text-emerald-500 transition-colors line-clamp-1">
+                                                        <h3 className="font-black text-base text-black mb-1.5 group-hover:text-emerald-500 transition-colors line-clamp-1 uppercase tracking-tight">
                                                             {material.title}
                                                         </h3>
-                                                        <p className="text-[10px] text-slate-400 mb-6 line-clamp-2 opacity-70 leading-relaxed font-medium">
+                                                        <p className="text-[10px] text-slate-500 mb-6 line-clamp-2 opacity-70 leading-relaxed font-bold">
                                                             {material.description || "Continue your progress in this track."}
                                                         </p>
-                                                        <Button size="sm" className="w-full h-8 sm:h-9 text-[9px] font-black tracking-[0.2em] bg-slate-700/50 text-slate-300 hover:bg-emerald-600 hover:text-white border-slate-700 rounded-lg sm:rounded-xl uppercase transition-all">
+                                                        <Button size="sm" className="w-full h-8 sm:h-9 text-[9px] font-black tracking-[0.2em] bg-[#1a1a1a] text-white hover:bg-emerald-600 hover:text-white border-2 border-black rounded-none uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
                                                             RESUME COURSE
                                                         </Button>
                                                     </div>
                                                 ))}
                                                 <div
                                                     onClick={handleOpenCourses}
-                                                    className="bg-slate-800/50 rounded-xl p-4 border-dashed border-2 border-slate-700/30 hover:border-emerald-500/50 transition-all group cursor-pointer flex flex-col items-center justify-center text-center hover:bg-emerald-500/5 min-h-[160px]"
+                                                    className="bg-white rounded-none p-4 border-dashed border-2 border-black/20 hover:border-black transition-all group cursor-pointer flex flex-col items-center justify-center text-center hover:bg-black/5 min-h-[160px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]"
                                                 >
-                                                    <PlusCircle className="w-8 h-8 text-slate-500 opacity-30 group-hover:text-emerald-500 group-hover:opacity-100 mb-2 transition-all" />
-                                                    <h4 className="font-black text-slate-400 group-hover:text-white text-xs">Explore More</h4>
-                                                    <p className="text-[9px] text-slate-500 italic mt-0.5">Full catalog</p>
+                                                    <PlusCircle className="w-8 h-8 text-slate-300 group-hover:text-black mb-2 transition-all" />
+                                                    <h4 className="font-black text-slate-400 group-hover:text-black text-xs uppercase tracking-widest">Explore More</h4>
+                                                    <p className="text-[9px] text-slate-400 italic mt-0.5 font-bold">FULL CATALOG</p>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
                                         /* State 3: Empty State (No Enrolments) */
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-slate-800 rounded-[2rem] border-dashed border-2 border-slate-700/50 max-h-[60vh] my-auto animate-in fade-in zoom-in duration-500">
-                                            <div className="w-24 h-24 bg-emerald-500/5 rounded-full flex items-center justify-center mb-8 border border-emerald-500/10 ring-8 ring-emerald-500/5">
-                                                <BookOpen className="w-10 h-10 text-emerald-500 opacity-40" />
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-white rounded-none border-dashed-2 border-4 border-black/10 max-h-[60vh] my-auto animate-in fade-in zoom-in duration-500 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.05)]">
+                                            <div className="w-24 h-24 bg-white rounded-none flex items-center justify-center mb-8 border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                                                <BookOpen className="w-10 h-10 text-black" />
                                             </div>
-                                            <h2 className="text-3xl font-black mb-3 italic tracking-tighter uppercase text-slate-500">Library Empty</h2>
-                                            <p className="text-slate-400 font-mono text-sm max-w-sm leading-relaxed opacity-70">
+                                            <h2 className="text-3xl font-black mb-3 italic tracking-tighter uppercase text-black">Hub Empty</h2>
+                                            <p className="text-slate-500 font-mono text-sm max-w-sm leading-relaxed font-bold">
                                                 {"Your learning space is currently clear. Head over to Academy Courses or Resource Catalog to enroll in your first course."}
                                             </p>
                                             <div className="flex gap-4 mt-10">
                                                 <Button
                                                     onClick={handleCodeNow}
-                                                    className="bg-white text-slate-900 hover:bg-slate-200 px-8 font-black text-xs tracking-widest rounded-xl transition-all h-12 uppercase"
+                                                    className="bg-[#1a1a1a] text-white hover:bg-black px-8 font-black text-xs tracking-widest rounded-none transition-all h-12 uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                                                 >
                                                     OPEN IDE
                                                 </Button>
                                                 <Button
                                                     onClick={handleOpenCourses}
                                                     variant="outline"
-                                                    className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/5 px-8 font-black text-xs tracking-widest rounded-xl transition-all h-12 uppercase"
+                                                    className="bg-white border-2 border-black text-black hover:bg-black/5 px-8 font-black text-xs tracking-widest rounded-none transition-all h-12 uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                                                 >
-                                                    BROWSE COURSES
+                                                    BROWSER COURSES
                                                 </Button>
                                             </div>
                                         </div>
@@ -814,14 +816,14 @@ epochs: 100/100
                                             variant="ghost"
                                             size="icon"
                                             onClick={handleBackToLearning}
-                                            className="h-9 w-9 text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl"
+                                            className="h-9 w-9 text-black hover:bg-black/5 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white"
                                         >
                                             <ArrowLeft className="w-5 h-5" />
                                         </Button>
                                         <div>
-                                            <h1 className="text-2xl font-black tracking-tight flex items-center gap-3 text-white">
-                                                {courseTab === 'courses' ? 'Academy Courses' : courseTab === 'catalog' ? 'Resource Catalog' : 'Registered Hub'}
-                                                <span className="text-xs font-mono font-normal text-slate-500 opacity-50 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700/50 uppercase tracking-widest">
+                                            <h1 className="text-2xl font-black tracking-tighter flex items-center gap-3 text-black uppercase">
+                                                {courseTab === 'courses' ? 'Academy' : courseTab === 'catalog' ? 'Catalog' : 'Registered'}
+                                                <span className="text-[10px] font-black text-emerald-600 bg-white px-2 py-0.5 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-widest">
                                                     {courseTab === 'courses' ? rawMaterials.length : courseTab === 'catalog' ? binaryMaterials.length : registeredIds.size} Items
                                                 </span>
                                             </h1>
@@ -830,17 +832,17 @@ epochs: 100/100
 
                                     <div className="flex items-center gap-3 w-full lg:w-auto">
                                         <div className="relative flex-1 lg:w-64">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                             <Input
-                                                placeholder={`Search in ${courseTab}...`}
+                                                placeholder={`Search...`}
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="pl-9 h-10 bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-emerald-500/20 rounded-xl font-mono text-xs text-white"
+                                                className="pl-10 h-10 bg-white border-2 border-black rounded-none font-bold text-xs text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] focus-visible:ring-0 focus-visible:border-emerald-500 transition-all uppercase"
                                             />
                                             {searchQuery && (
                                                 <button
                                                     onClick={() => setSearchQuery("")}
-                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-black"
                                                 >
                                                     <XCircle className="w-4 h-4" />
                                                 </button>
@@ -849,14 +851,14 @@ epochs: 100/100
                                     </div>
                                 </div>
 
-                                <div className="flex p-1.5 bg-slate-800/50 rounded-xl border border-slate-700/50 self-start mb-8 shadow-sm overflow-x-auto max-w-full scrollbar-hide">
+                                <div className="flex p-1 bg-white border-2 border-black rounded-none self-start mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] overflow-x-auto max-w-full scrollbar-hide">
                                     <Button
                                         variant={courseTab === 'courses' ? 'secondary' : 'ghost'}
                                         size="sm"
                                         onClick={() => setCourseTab('courses')}
                                         className={cn(
-                                            "h-8 px-6 text-[10px] font-black transition-all rounded-lg shrink-0",
-                                            courseTab === 'courses' ? "shadow-md text-white bg-slate-700 border border-slate-600" : "text-slate-400"
+                                            "h-9 px-8 text-[11px] font-black transition-all rounded-none shrink-0 uppercase tracking-widest",
+                                            courseTab === 'courses' ? "bg-emerald-500 text-white border-r-2 border-black" : "text-slate-400 hover:bg-black/5"
                                         )}
                                     >
                                         COURSES
@@ -866,8 +868,8 @@ epochs: 100/100
                                         size="sm"
                                         onClick={() => setCourseTab('catalog')}
                                         className={cn(
-                                            "h-8 px-6 text-[10px] font-black transition-all rounded-lg shrink-0",
-                                            courseTab === 'catalog' ? "shadow-md text-white bg-slate-700 border border-slate-600" : "text-slate-400"
+                                            "h-9 px-8 text-[11px] font-black transition-all rounded-none shrink-0 uppercase tracking-widest",
+                                            courseTab === 'catalog' ? "bg-emerald-500 text-white border-x-2 border-black" : "text-slate-400 hover:bg-black/5"
                                         )}
                                     >
                                         CATALOG
@@ -877,8 +879,8 @@ epochs: 100/100
                                         size="sm"
                                         onClick={() => setCourseTab('registered')}
                                         className={cn(
-                                            "h-8 px-6 text-[10px] font-black transition-all rounded-lg shrink-0",
-                                            courseTab === 'registered' ? "shadow-md text-white bg-slate-800 border border-slate-700" : "text-slate-400"
+                                            "h-9 px-8 text-[11px] font-black transition-all rounded-none shrink-0 uppercase tracking-widest",
+                                            courseTab === 'registered' ? "bg-emerald-500 text-white border-l-2 border-black" : "text-slate-400 hover:bg-black/5"
                                         )}
                                     >
                                         REGISTERED
@@ -890,7 +892,7 @@ epochs: 100/100
                                         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 px-1 sm:px-0">
                                             {isLoadingMaterials ? (
                                                 Array(6).fill(0).map((_, i) => (
-                                                    <div key={i} className="h-48 sm:h-64 bg-slate-800 rounded-xl sm:rounded-2xl animate-pulse border border-slate-700/50" />
+                                                    <div key={i} className="h-48 sm:h-64 bg-white rounded-none border-2 border-black animate-pulse opacity-20" />
                                                 ))
                                             ) : (courseTab === 'courses' ? activeRawList : activeBinaryList).length > 0 ? (
                                                 (courseTab === 'courses' ? activeRawList : activeBinaryList).map((material) => (
@@ -903,38 +905,45 @@ epochs: 100/100
                                                                 window.open(material.url, "_blank");
                                                             }
                                                         }}
-                                                        className="bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 border border-slate-700/50 hover:border-emerald-500/50 transition-all group cursor-pointer flex flex-col shadow-sm hover:shadow-xl relative overflow-hidden"
+                                                        className="bg-white rounded-none p-3 sm:p-6 border-2 border-black hover:border-emerald-500 transition-all group cursor-pointer flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden active:translate-x-[2px] active:translate-y-[2px] active:shadow-none duration-300"
                                                     >
                                                         <div className="flex justify-between items-start mb-2 sm:mb-5 relative z-10">
                                                             <div className={cn(
-                                                                "p-1.5 sm:p-3 rounded-lg sm:rounded-xl border-2 transition-all group-hover:scale-110 duration-300 shadow-sm",
+                                                                "p-1.5 sm:p-3 rounded-none border-2 transition-all group-hover:bg-emerald-500 group-hover:text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                                                 getTypeColor(material.type)
                                                             )}>
                                                                 <div className="scale-75 sm:scale-100">
                                                                     {getTypeIcon(material.type)}
                                                                 </div>
                                                             </div>
-                                                            <div className="text-[8px] sm:text-[10px] font-mono text-slate-400 uppercase opacity-60 bg-slate-700/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border border-slate-600 truncate max-w-[50%]">
+                                                            <div className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase bg-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] truncate max-w-[50%]">
                                                                 {material.category}
                                                             </div>
                                                         </div>
-                                                        <h3 className="font-black text-xs sm:text-lg text-white mb-1 sm:mb-2 group-hover:text-emerald-500 transition-colors line-clamp-1 relative z-10">
+                                                        <h3 className="font-black text-xs sm:text-lg text-black mb-1 sm:mb-2 group-hover:text-emerald-600 transition-colors line-clamp-1 relative z-10 uppercase tracking-tighter">
                                                             {material.title}
                                                         </h3>
-                                                        <p className="text-[10px] sm:text-sm text-slate-400 mb-3 sm:mb-6 line-clamp-2 flex-1 relative z-10 opacity-80 leading-relaxed font-medium">
+                                                        <p className="text-[10px] sm:text-sm text-slate-500 mb-3 sm:mb-6 line-clamp-2 flex-1 relative z-10 font-bold leading-tight uppercase tracking-tight">
                                                             {material.description || "Access premium content."}
                                                         </p>
-                                                        <Button variant="outline" size="sm" className="w-full h-7 sm:h-10 text-[8px] sm:text-[10px] font-black tracking-widest border-emerald-500/20 hover:bg-emerald-500/10 group-hover:border-emerald-500/50 relative z-10 rounded-lg sm:rounded-xl uppercase">
+                                                        <Button variant="outline" size="sm" className="w-full h-7 sm:h-10 text-[8px] sm:text-[10px] font-black tracking-widest bg-[#1a1a1a] text-white hover:bg-emerald-600 border-2 border-black relative z-10 rounded-none uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
                                                             {material.type === 'document' ? 'CHECK DESCRIPTION' : `VIEW ${material.type}`}
                                                         </Button>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="col-span-full py-20 sm:py-32 text-center bg-slate-800 rounded-2xl border-dashed border-2 border-slate-700/50 flex flex-col items-center mx-2">
-                                                    <XCircle className="w-10 h-10 sm:w-12 sm:h-12 text-slate-500 opacity-20 mb-4" />
-                                                    <h3 className="text-lg sm:text-xl font-black mb-1 text-slate-300">No materials found</h3>
-                                                    <p className="text-slate-500 font-mono text-[10px] sm:text-sm tracking-wide">{"// status_404: empty category."}</p>
-                                                    {searchQuery && <Button variant="link" onClick={() => setSearchQuery("")} className="mt-4 text-emerald-500 font-bold text-xs">Clear Search</Button>}
+                                                <div className="col-span-full py-20 sm:py-32 text-center bg-white rounded-none border-dashed-2 border-4 border-black/10 flex flex-col items-center mx-2 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.05)]">
+                                                    <XCircle className="w-10 h-10 sm:w-12 sm:h-12 text-black opacity-10 mb-4" />
+                                                    <h3 className="text-lg sm:text-xl font-black mb-1 text-black uppercase tracking-tighter italic">No items found</h3>
+                                                    <p className="text-slate-500 font-mono text-[10px] sm:text-sm tracking-wide font-bold">{"// status_404: search result empty."}</p>
+                                                    {searchQuery && (
+                                                        <Button
+                                                            onClick={() => setSearchQuery("")}
+                                                            className="mt-6 bg-white border-2 border-black text-black hover:bg-black/5 px-6 font-black text-[10px] tracking-widest rounded-none uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                                        >
+                                                            Clear Search
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -944,9 +953,9 @@ epochs: 100/100
                                             {/* Dynamic Registered Items */}
                                             {activeRegisteredList.length > 0 ? (
                                                 <div className="mt-4">
-                                                    <h3 className="text-lg font-black mb-6 px-1 flex items-center gap-2 text-white">
-                                                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                                        Active Enrolments
+                                                    <h3 className="text-lg font-black mb-6 px-1 flex items-center gap-2 text-black uppercase tracking-tighter italic">
+                                                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                                        Active enrolments
                                                     </h3>
                                                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                                                         {activeRegisteredList.map((material) => (
@@ -956,26 +965,26 @@ epochs: 100/100
                                                                     setActiveDashboardMaterial(material);
                                                                     setView('materials');
                                                                 }}
-                                                                className="bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-emerald-500/30 hover:border-emerald-500 transition-all group cursor-pointer flex flex-col shadow-md hover:shadow-xl relative overflow-hidden"
+                                                                className="bg-white rounded-none p-4 sm:p-6 border-2 border-black hover:border-emerald-500 transition-all group cursor-pointer flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden active:translate-x-[2px] active:translate-y-[2px] active:shadow-none duration-300"
                                                             >
-                                                                <div className="flex justify-between items-start mb-4 sm:mb-6">
+                                                                <div className="flex justify-between items-start mb-4 sm:mb-6 relative z-10">
                                                                     <div className={cn(
-                                                                        "p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 transition-all",
+                                                                        "p-2 sm:p-3 rounded-none border-2 transition-all group-hover:bg-emerald-500 group-hover:text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                                                                         getTypeColor(material.type)
                                                                     )}>
                                                                         {getTypeIcon(material.type)}
                                                                     </div>
-                                                                    <div className="text-[8px] sm:text-[9px] font-mono text-emerald-500 font-black uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                                                                    <div className="text-[8px] sm:text-[9px] font-black font-mono text-emerald-600 bg-white px-2 py-1 rounded-none border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] uppercase">
                                                                         ENROLLED
                                                                     </div>
                                                                 </div>
-                                                                <h3 className="font-black text-sm sm:text-lg text-white mb-1 group-hover:text-emerald-500 line-clamp-1">
+                                                                <h3 className="font-black text-sm sm:text-lg text-black mb-1 group-hover:text-emerald-600 line-clamp-1 uppercase tracking-tighter">
                                                                     {material.title}
                                                                 </h3>
-                                                                <p className="text-[10px] sm:text-sm text-slate-400 mb-4 sm:mb-8 line-clamp-2 flex-1">
+                                                                <p className="text-[10px] sm:text-sm text-slate-500 mb-4 sm:mb-8 line-clamp-2 flex-1 font-bold leading-tight uppercase tracking-tight">
                                                                     {material.description || "Continue where you left off."}
                                                                 </p>
-                                                                <Button size="sm" className="w-full h-8 sm:h-10 text-[10px] font-black tracking-[0.2em] bg-slate-700/50 text-slate-300 hover:bg-emerald-600 border border-slate-700 hover:text-white rounded-lg sm:rounded-xl uppercase">
+                                                                <Button size="sm" className="w-full h-8 sm:h-10 text-[10px] font-black tracking-[0.2em] bg-[#1a1a1a] text-white hover:bg-emerald-600 border-2 border-black rounded-none uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
                                                                     OPEN CONTENT
                                                                 </Button>
                                                             </div>
@@ -983,9 +992,9 @@ epochs: 100/100
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="py-20 text-center bg-slate-800 rounded-[2rem] border-dashed border-2 border-slate-700/50 m-2">
-                                                    <Library className="w-12 h-12 text-slate-500 opacity-10 mx-auto mb-4" />
-                                                    <p className="text-slate-400 font-mono text-sm leading-relaxed opacity-60">
+                                                <div className="py-20 text-center bg-white rounded-none border-dashed-2 border-4 border-black/10 m-2 shadow-[10px_10px_0px_0px_rgba(0,0,0,0.05)]">
+                                                    <Library className="w-12 h-12 text-black opacity-10 mx-auto mb-4" />
+                                                    <p className="text-slate-500 font-mono text-sm leading-relaxed font-bold uppercase">
                                                         {"// NO_ENROLMENTS_DETECTED\nRegister courses from Academy or Catalog to see them here."}
                                                     </p>
                                                 </div>

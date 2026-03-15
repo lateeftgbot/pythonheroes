@@ -47,7 +47,6 @@ const Navbar = () => {
     { to: "/", label: "Home" },
     { to: "/about", label: "About" },
     { to: "/python-heroes", label: "Python Heroes" },
-    { to: "/ai-teacher", label: "AI Teacher" },
   ];
 
 

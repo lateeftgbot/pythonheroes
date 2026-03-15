@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import Navbar from "@/components/Navbar";
+import AppDrawer from "@/components/AppDrawer";
 import {
     ArrowLeft,
     BrainCircuit,
@@ -24,15 +25,21 @@ import {
     Loader2,
     Trophy,
     BookOpen,
-    LayoutDashboard,
-    User
+    LayoutGrid,
+    User,
+    LogOut,
+    MessageCircle,
+    Medal,
+    Star,
+    Home,
+    Crown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -50,11 +57,34 @@ type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 type Tab = 'problems' | 'codes' | 'challenges';
 type ChallengeMode = 'solo' | 'group';
 
-// Challenges are now loaded from API to state
+// Mock Leaderboard Data
+interface LeaderboardPlayer {
+    id: string;
+    username: string;
+    name: string;
+    avatar?: string;
+    score: number;
+    rank: number;
+}
+const MOCK_LEADERBOARD: LeaderboardPlayer[] = [
+    { id: '1', username: 'neural_ninja', name: 'Alina', score: 9850, rank: 1, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alina' },
+    { id: '2', username: 'quantum_coder', name: 'Marcus', score: 8720, rank: 2, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus' },
+    { id: '3', username: 'byte_weaver', name: 'Sarah', score: 8150, rank: 3, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
+    { id: '4', username: 'logic_lord', name: 'David', score: 7400, rank: 4 },
+    { id: '5', username: 'syntax_samurai', name: 'Elena', score: 6900, rank: 5 },
+    { id: '6', username: 'algo_master', name: 'James', score: 6500, rank: 6 },
+    { id: '7', username: 'code_whisperer', name: 'Lily', score: 5800, rank: 7 },
+];
+
 const InfiniteSpace = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<Tab>('problems');
+    const [searchParams] = useSearchParams();
+    
+    // Read initial state from URL
+    const initialTab = (searchParams.get('tab') as Tab) || 'problems';
+
+    const [activeTab, setActiveTab] = useState<Tab>(initialTab);
     const [challengeType, setChallengeType] = useState<'solutions' | 'typing'>('solutions');
     const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All');
     const [problems, setProblems] = useState<Problem[]>([]);
@@ -65,7 +95,7 @@ const InfiniteSpace = () => {
     const [currentCodePage, setCurrentCodePage] = useState(0);
     const [jumpCodePage, setJumpCodePage] = useState("");
     const [totalCodes, setTotalCodes] = useState(0); // Removed usage below
-    const ITEMS_PER_PAGE = 6;
+    const ITEMS_PER_PAGE = 10;
 
     // PvP States
     const [pvpStatus, setPvpStatus] = useState<'idle' | 'searching' | 'matched'>('idle');
@@ -160,11 +190,14 @@ const InfiniteSpace = () => {
     const [focusedCodeId, setFocusedCodeId] = useState<number | null>(null);
     const [prediction, setPrediction] = useState<string | null>(null);
     const [showResult, setShowResult] = useState(false);
+    const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(searchParams.get('leaderboard') === 'true');
+    const [leaderboardCategory, setLeaderboardCategory] = useState<'Global' | 'Solo' | 'PvP' | 'Challenges'>('Global');
 
     // Battle Loading / Sync Overlay
     const BattleLoadingOverlay = () => (
         <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-[#0a0a0a] rounded-3xl border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
+            <div className="max-w-md w-full bg-[#0a0a0a] rounded-none border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
                 <div className="relative mx-auto w-24 h-24">
                     <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                     <div className="absolute inset-4 rounded-full bg-primary/10 flex items-center justify-center">
@@ -199,8 +232,8 @@ const InfiniteSpace = () => {
                 <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-secondary/10 rounded-full blur-[60px]" />
 
                 <div className="relative">
-                    <div className="mx-auto w-28 h-28 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center relative group">
-                        <div className="absolute inset-0 bg-primary/5 rounded-3xl animate-ping opacity-20" />
+                    <div className="mx-auto w-28 h-28 rounded-none bg-primary/10 border border-primary/20 flex items-center justify-center relative group">
+                        <div className="absolute inset-0 bg-primary/5 rounded-none animate-ping opacity-20" />
                         <Swords className="w-12 h-12 text-primary animate-bounce-slow" />
                         <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-secondary flex items-center justify-center border-4 border-[#0a0a0a] animate-in zoom-in-50 delay-300">
                             <Zap className="w-4 h-4 text-white" />
@@ -214,7 +247,7 @@ const InfiniteSpace = () => {
                         <h2 className="text-4xl font-black font-mono tracking-tighter">Congratulations!</h2>
                     </div>
 
-                    <div className="py-6 px-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
+                    <div className="py-6 px-4 bg-white/5 rounded-none border border-white/10 backdrop-blur-sm">
                         <p className="text-slate-400 text-xs font-mono mb-2 uppercase tracking-widest">You are matched with</p>
                         <p className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
                             {opponentName}
@@ -743,7 +776,7 @@ const InfiniteSpace = () => {
     const difficulties: (Difficulty | 'All')[] = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
     return (
-        <div className="h-screen bg-[#0a0a0a] text-foreground font-sans selection:bg-primary/30 flex flex-col overflow-hidden">
+        <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-primary/30 flex flex-col font-mono">
             <Navbar />
 
             {/* Background Decorations */}
@@ -755,100 +788,135 @@ const InfiniteSpace = () => {
             {isBattleLoading && <BattleLoadingOverlay />}
             {showMatchFoundNotification && opponentInfo && <MatchFoundOverlay opponentName={opponentInfo.name} />}
 
-            <main className="flex-1 flex flex-col container mx-auto px-6 md:px-4 pt-[83px] pb-[3px] relative z-10 overflow-hidden">
-                {/* Header Section */}
-                <div className="max-w-4xl mx-auto mb-3">
-                    <Link to="/python-heroes" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors mb-2 group">
-                        <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-                        Back to Academy
-                    </Link>
-
-                    <div className="flex flex-col md:flex-row items-center md:items-end justify-between gap-4 w-full">
-                        <div className="text-center md:text-left w-full md:w-auto">
-                            <h1 className="text-xl font-extrabold mb-1">
-                                Infinite <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent inline-block">Space</span>
-                            </h1>
-                            <p className="text-muted-foreground text-[10px] md:text-xs max-w-lg mx-auto md:mx-0">
-                                Advanced programming playground designed for university excellence. Master complex logic and binary patterns.
-                            </p>
-                        </div>
-                        <div className="flex items-center w-full md:w-auto justify-center md:justify-end">
-                            <div className="flex bg-muted/20 p-1 rounded-xl border border-border/50 backdrop-blur-md w-fit mx-auto md:mx-0">
-                                <button
-                                    onClick={() => {
-                                        setActiveTab('problems');
-                                        setCurrentPage(0);
-                                    }}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-mono transition-all",
-                                        activeTab === 'problems' ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <BrainCircuit className="w-3.5 h-3.5" />
-                                        Problems
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setActiveTab('codes');
-                                        setFocusedCodeId(null);
-                                    }}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-mono transition-all",
-                                        activeTab === 'codes' ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <Code2 className="w-3.5 h-3.5" />
-                                        Codes
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('challenges')}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-mono transition-all",
-                                        activeTab === 'challenges' ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <Swords className="w-3.5 h-3.5" />
-                                        Challenge Space
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
+            <main className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-6 sm:px-10 pt-20 pb-10 relative z-10 overflow-y-auto custom-scrollbar">
+                {/* Header Section - Brutalist */}
+                <div className="mb-6 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6">
+                    <div className="space-y-1">
+                        <Link to="/python-heroes" className="inline-flex items-center gap-2 text-[10px] text-slate-500 hover:text-primary transition-colors group uppercase tracking-widest">
+                            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
+                            Back to Academy
+                        </Link>
+                        <h1 className="text-3xl sm:text-4xl font-black tracking-tighter flex items-center gap-3">
+                            INFINITE <span className="text-primary italic">SPACE</span>
+                            <BrainCircuit className="w-6 h-6 text-primary" />
+                        </h1>
+                        <p className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">University Programming Playground &bull; Logic Mastery Engine</p>
                     </div>
 
-                    {/* Sub-header for Difficulty */}
-                    {activeTab !== 'challenges' && (
-                        <div className="mt-2 flex flex-wrap items-center justify-center md:justify-start gap-2">
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground mr-1">
-                                <Filter className="w-3 h-3" />
-                                Level:
-                            </div>
-                            {difficulties.map(lib => (
-                                <button
-                                    key={lib}
-                                    onClick={() => {
-                                        setDifficulty(lib);
-                                        setFocusedCodeId(null);
-                                        setCurrentPage(0);
-                                        setCurrentCodePage(0);
-                                    }}
-                                    className={cn(
-                                        "px-3 py-1 rounded-full text-[10px] font-mono border transition-all",
-                                        difficulty === lib
-                                            ? "bg-primary/20 border-primary text-primary"
-                                            : "bg-muted/10 border-border/50 text-muted-foreground hover:border-primary/30 hover:bg-muted/20"
-                                    )}
-                                >
-                                    {lib}
-                                </button>
-                            ))}
+                    {/* Quick Stats - Square */}
+                    <div className="flex gap-[1px] bg-white/10 p-[1px] shrink-0">
+                        <div className="px-3 py-1.5 bg-[#0a0a0a] border border-white/5 flex flex-col items-center min-w-[70px]">
+                            <p className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">PROBLEMS</p>
+                            <p className="text-sm font-black">{problems.length}</p>
                         </div>
-                    )}
+                        <div className="px-3 py-1.5 bg-[#0a0a0a] border border-white/5 flex flex-col items-center min-w-[60px]">
+                            <p className="text-[7px] font-bold text-secondary uppercase tracking-[0.2em]">CODES</p>
+                            <p className="text-sm font-black">{allCodePredictions.length}</p>
+                        </div>
+                        <div className="px-3 py-1.5 bg-[#0a0a0a] border border-white/5 flex flex-col items-center min-w-[60px]">
+                            <p className="text-[7px] font-bold text-slate-400 uppercase tracking-[0.2em]">ARENA</p>
+                            <p className="text-sm font-black">3</p>
+                        </div>
+                    </div>
                 </div>
+
+                {/* Tab Bar - Brutalist Square */}
+                <div className="flex mb-0 shrink-0 self-start w-full h-8">
+                    <button
+                        onClick={() => { setActiveTab('problems'); setCurrentPage(0); }}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-l border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.1)]",
+                            activeTab === 'problems'
+                                ? "bg-primary text-[#0a0a0a]"
+                                : "bg-primary/10 text-primary/60 hover:bg-primary/20 hover:text-primary"
+                        )}
+                    >
+                        <BrainCircuit className="w-3 h-3" />
+                        Library
+                        <span className="opacity-50 text-[8px]">[{filteredProblems.length}]</span>
+                    </button>
+                    <button
+                        onClick={() => { setActiveTab('codes'); setFocusedCodeId(null); }}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(59,130,246,0.1)]",
+                            activeTab === 'codes'
+                                ? "bg-secondary text-[#0a0a0a]"
+                                : "bg-secondary/10 text-secondary/60 hover:bg-secondary/20 hover:text-secondary"
+                        )}
+                    >
+                        <Code2 className="w-3 h-3" />
+                        Projects
+                        <span className="opacity-50 text-[8px]">[{allCodePredictions.length}]</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('challenges')}
+                        className={cn(
+                            "flex-1 flex items-center justify-center gap-1.5 px-4 font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-200 border-t border-r border-white/10 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.1)]",
+                            activeTab === 'challenges'
+                                ? "bg-emerald-500 text-[#0a0a0a]"
+                                : "bg-emerald-500/10 text-emerald-400/70 hover:bg-emerald-500/20 hover:text-emerald-400"
+                        )}
+                    >
+                        <Swords className="w-3 h-3" />
+                        Challenges
+                    </button>
+                </div>
+
+                {/* Difficulty Filter - Coloured Square Buttons */}
+                {activeTab !== 'challenges' && (
+                    <div className="flex gap-[1px] bg-white/5 p-[1px] mb-0 shrink-0">
+                        {/* ALL */}
+                        <button
+                            onClick={() => { setDifficulty('All'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
+                            className={cn(
+                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                difficulty === 'All'
+                                    ? "bg-violet-600 text-white border-violet-700"
+                                    : "bg-violet-950 text-violet-400 border-violet-800 hover:bg-violet-900"
+                            )}
+                        >
+                            All
+                        </button>
+                        {/* BEGINNER */}
+                        <button
+                            onClick={() => { setDifficulty('Beginner'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
+                            className={cn(
+                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                difficulty === 'Beginner'
+                                    ? "bg-emerald-500 text-black border-emerald-600"
+                                    : "bg-emerald-950 text-emerald-400 border-emerald-800 hover:bg-emerald-900"
+                            )}
+                        >
+                            Beginner
+                        </button>
+                        {/* INTERMEDIATE */}
+                        <button
+                            onClick={() => { setDifficulty('Intermediate'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
+                            className={cn(
+                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                difficulty === 'Intermediate'
+                                    ? "bg-amber-400 text-black border-amber-500"
+                                    : "bg-amber-950 text-amber-400 border-amber-800 hover:bg-amber-900"
+                            )}
+                        >
+                            Intermediate
+                        </button>
+                        {/* ADVANCED */}
+                        <button
+                            onClick={() => { setDifficulty('Advanced'); setFocusedCodeId(null); setCurrentPage(0); setCurrentCodePage(0); }}
+                            className={cn(
+                                "flex-1 px-2 py-1 text-[8px] font-black uppercase tracking-[0.15em] transition-all border",
+                                difficulty === 'Advanced'
+                                    ? "bg-rose-600 text-white border-rose-700"
+                                    : "bg-rose-950 text-rose-400 border-rose-800 hover:bg-rose-900"
+                            )}
+                        >
+                            Advanced
+                        </button>
+                    </div>
+                )}
+
+
 
                 {isLoading ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-500">
@@ -863,88 +931,72 @@ const InfiniteSpace = () => {
                     </div>
                 ) : (
                     /* Content Container */
-                    <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col overflow-hidden">
+                    <div className="flex-1 w-full flex flex-col">
                         {activeTab === 'problems' && (
-                            <div className="flex-1 flex flex-col overflow-hidden gap-3">
-                                <h2 className="text-base font-bold flex items-center gap-2">
-                                    <BookOpen className="w-4 h-4 text-primary" />
-                                    University Programming Problems
-                                </h2>
-                                <div className="bg-[#f0fdf4]/10 border border-green-500/20 rounded-2xl p-3 md:p-4 shadow-[0_0_20px_rgba(34,197,94,0.05)] overflow-y-auto custom-scrollbar flex-1">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-3 px-3 md:px-0 focus-visible:outline-none">
+                            <div className="flex-1 flex flex-col gap-0">
+                                {/* Problems Container - Yellowish-White Square */}
+                                <div className="flex-1 bg-[#fdf6e3] text-[#1a1a1a] border border-white/10 flex flex-col p-3 sm:p-4">
+                                    <p className="text-[7px] font-black text-[#555] uppercase tracking-[0.4em] mb-3 flex items-center gap-3">
+                                        <span className="h-[1px] w-4 bg-black/30" />
+                                        LIBRARY_SECTOR // UNIVERSITY_LOGIC_NODES
+                                        <span className="h-[1px] w-4 bg-black/30" />
+                                    </p>
+                                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar-brutalist">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                         {filteredProblems.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE).map((problem, idx) => (
-                                            <div key={problem.id} className="bg-white p-3.5 md:p-4 rounded-xl flex flex-col items-start gap-3 border border-border/50 hover:border-primary/50 transition-all duration-300 group shadow-sm">
+                                            <div
+                                                key={problem.id}
+                                                onClick={() => setSelectedProblem(problem)}
+                                                className="group relative bg-white border-2 border-black p-3 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-2 cursor-pointer"
+                                            >
                                                 <div className="flex w-full items-start justify-between gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex flex-shrink-0 items-center justify-center text-sm font-bold font-mono text-primary group-hover:bg-primary/20 transition-colors">
+                                                    <div className="w-7 h-7 flex shrink-0 items-center justify-center text-[11px] font-black border-2 border-[#1a1a1a] text-white bg-[#1a1a1a]">
                                                         {currentPage * ITEMS_PER_PAGE + idx + 1}
                                                     </div>
                                                     <span className={cn(
-                                                        "px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-tighter",
-                                                        problem.difficulty === 'Beginner' ? "bg-green-500/10 text-green-600" :
-                                                            problem.difficulty === 'Intermediate' ? "bg-yellow-500/10 text-yellow-600" : "bg-red-500/10 text-red-600"
+                                                        "px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest border border-black/70",
+                                                        problem.difficulty === 'Beginner' ? "bg-emerald-500 text-black" :
+                                                            problem.difficulty === 'Intermediate' ? "bg-amber-400 text-black" : "bg-red-600 text-white"
                                                     )}>
                                                         {problem.difficulty}
                                                     </span>
                                                 </div>
                                                 <div className="flex-1 min-w-0 w-full">
-                                                    <h3 className="text-[14px] font-bold text-slate-900 mb-1 group-hover:text-primary transition-colors">
+                                                    <h3 className="text-[12px] font-black text-[#1a1a1a] mb-1 group-hover:text-primary transition-colors uppercase tracking-tight leading-tight">
                                                         {problem.title}
                                                     </h3>
-                                                    <p className="text-[11px] text-slate-600 leading-tight opacity-90 whitespace-pre-wrap">
-                                                        {problem.description}
+                                                    <p className="text-[10px] text-[#4a4a4a] leading-snug font-semibold">
+                                                        {problem.description?.slice(0, 80)}{problem.description?.length > 80 ? '...' : ''}
                                                     </p>
                                                 </div>
-                                                <div className="w-full pt-2 border-t border-slate-100 flex items-center justify-between mt-auto">
-                                                    <span className="text-[10px] font-mono text-slate-400 capitalize">{problem.category}</span>
-                                                    <Button variant="ghost" size="sm" className="h-7 px-3 text-[11px] font-mono text-primary hover:bg-primary/10 group/btn">
-                                                        Solve <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
-                                                    </Button>
+                                                <div className="w-full pt-1.5 border-t border-black/10 flex items-center justify-between mt-auto">
+                                                    <span className="text-[8px] font-black text-[#777] uppercase tracking-widest">{problem.category}</span>
+                                                    <span className="text-[8px] font-black uppercase tracking-widest bg-primary text-black px-2.5 py-1 group-hover:bg-[#1a1a1a] group-hover:text-white transition-colors">
+                                                        VIEW &rsaquo;
+                                                    </span>
                                                 </div>
                                             </div>
-                                        ))}
+                                        ))}\n
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Pagination Arrows and Jump-to-Page */}
-                                <div className="flex flex-wrap items-center justify-center gap-3 mt-6 sm:mt-[3px]">
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-lg border border-border/50 hover:bg-primary/20 hover:text-primary disabled:opacity-20"
-                                            disabled={currentPage === 0}
-                                            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                                        </Button>
-
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-muted/10 border border-border/50 rounded-lg">
-                                            <span className="text-[11px] font-mono font-bold text-primary">
-                                                {currentPage + 1}
-                                            </span>
-                                            <span className="text-[11px] font-mono text-muted-foreground opacity-50">/</span>
-                                            <span className="text-[11px] font-mono text-muted-foreground">
-                                                {Math.ceil(filteredProblems.length / ITEMS_PER_PAGE)}
-                                            </span>
-                                        </div>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-lg border border-border/50 hover:bg-primary/20 hover:text-primary disabled:opacity-20"
-                                            disabled={(currentPage + 1) * ITEMS_PER_PAGE >= filteredProblems.length}
-                                            onClick={() => setCurrentPage(prev => prev + 1)}
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5" />
-                                        </Button>
+                                {/* Pagination - Brutalist Square */}
+                                <div className="flex items-center justify-center gap-[1px] bg-white/5 p-[1px] mt-0">
+                                    <button
+                                        disabled={currentPage === 0}
+                                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                                        className="px-4 py-2 text-[10px] font-black uppercase border border-white/10 bg-[#0a0a0a] text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        &laquo; PREV
+                                    </button>
+                                    <div className="px-6 py-2 text-[10px] font-black border border-white/10 bg-white text-[#0a0a0a]">
+                                        {currentPage + 1} / {Math.ceil(filteredProblems.length / ITEMS_PER_PAGE)}
                                     </div>
-
-                                    {/* Jump to Page Search Bar */}
-                                    <div className="relative group">
-                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <div className="relative">
                                         <Input
                                             type="text"
-                                            placeholder="Jump to..."
+                                            placeholder="JUMP"
                                             value={jumpPage}
                                             onChange={(e) => setJumpPage(e.target.value)}
                                             onKeyDown={(e) => {
@@ -957,113 +1009,98 @@ const InfiniteSpace = () => {
                                                     }
                                                 }
                                             }}
-                                            className="h-7 w-28 pl-7 pr-2 text-[10px] font-mono bg-muted/20 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg"
+                                            className="h-[34px] w-20 text-center text-[10px] font-black uppercase bg-[#0a0a0a] border border-white/10 text-white rounded-none focus:border-primary"
                                         />
                                     </div>
+                                    <button
+                                        disabled={(currentPage + 1) * ITEMS_PER_PAGE >= filteredProblems.length}
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        className="px-4 py-2 text-[10px] font-black uppercase border border-white/10 bg-[#0a0a0a] text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        NEXT &raquo;
+                                    </button>
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'codes' && (
-                            <div className="flex-1 flex flex-col overflow-hidden gap-3">
-                                <h2 className="text-base font-bold flex items-center gap-2">
-                                    <Terminal className="w-4 h-4 text-primary" />
-                                    Prediction Sets
-                                </h2>
-                                <div className="bg-[#f0fdf4]/10 border border-blue-500/20 rounded-2xl p-3 md:p-4 shadow-[0_0_20px_rgba(59,130,246,0.05)] overflow-y-auto custom-scrollbar flex-1">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-3 px-3 md:px-0">
-                                        {paginatedCodes.map((item, idx) => (
-                                            <div key={item.id} className="bg-white p-3.5 md:p-4 rounded-xl flex flex-col items-start gap-3 border border-border/50 hover:border-primary/50 transition-all duration-300 group shadow-sm overflow-hidden text-slate-900 font-mono">
-                                                <div className="flex w-full items-start justify-between gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex flex-shrink-0 items-center justify-center text-sm font-bold font-mono text-primary group-hover:bg-primary/20 transition-colors">
-                                                        {currentCodePage * ITEMS_PER_PAGE + idx + 1}
+                            <div className="flex-1 flex flex-col gap-0">
+                                {/* Projects Container - Yellowish-White Square */}
+                                <div className="flex-1 bg-[#fdf6e3] text-[#1a1a1a] border border-white/10 flex flex-col p-3 sm:p-4">
+                                    <p className="text-[7px] font-black text-[#555] uppercase tracking-[0.4em] mb-3 flex items-center gap-3">
+                                        <span className="h-[1px] w-4 bg-black/30" />
+                                        PROJECT_LOGIC_MATRIX // PYTHON_LOGIC_NODES
+                                        <span className="h-[1px] w-4 bg-black/30" />
+                                    </p>
+                                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar-brutalist">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                            {paginatedCodes.map((item, idx) => (
+                                                <div key={item.id} className="group relative bg-white border-2 border-black p-3 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-2 overflow-hidden text-[#1a1a1a]">
+                                                    <div className="flex w-full items-start justify-between gap-2">
+                                                        <div className="w-7 h-7 flex shrink-0 items-center justify-center text-[11px] font-black border-2 border-[#1a1a1a] text-white bg-[#1a1a1a]">
+                                                            {currentCodePage * ITEMS_PER_PAGE + idx + 1}
+                                                        </div>
+                                                        <span className={cn(
+                                                            "px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest border border-black/70",
+                                                            item.difficulty === 'Beginner' ? "bg-emerald-500 text-black" :
+                                                                item.difficulty === 'Intermediate' ? "bg-amber-400 text-black" : "bg-red-600 text-white"
+                                                        )}>
+                                                            {item.difficulty}
+                                                        </span>
                                                     </div>
-                                                    <span className={cn(
-                                                        "px-1.5 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-tighter",
-                                                        item.difficulty === 'Beginner' ? "bg-green-500/10 text-green-600" :
-                                                            item.difficulty === 'Intermediate' ? "bg-yellow-500/10 text-yellow-600" : "bg-red-500/10 text-red-600"
-                                                    )}>
-                                                        {item.difficulty}
-                                                    </span>
-                                                </div>
-                                                <div className="flex-1 min-w-0 w-full">
-                                                    <h3 className="text-[14px] font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
-                                                        {item.title}
-                                                    </h3>
-                                                    <div className="rounded-lg border border-slate-100 overflow-hidden bg-[#050505]">
-                                                        <CodeMirror
-                                                            value={item.code}
-                                                            height="100px"
-                                                            theme="dark"
-                                                            extensions={[python()]}
-                                                            editable={false}
-                                                            basicSetup={{
-                                                                lineNumbers: true,
-                                                                foldGutter: false,
-                                                                dropCursor: false,
-                                                                allowMultipleSelections: false,
-                                                                indentOnInput: false,
-                                                            }}
-                                                            className="text-[10px] font-mono"
-                                                        />
+                                                    <div className="flex-1 min-w-0 w-full">
+                                                        <h3 className="text-[11px] font-black text-[#1a1a1a] mb-1.5 line-clamp-1 group-hover:text-secondary transition-colors uppercase tracking-tight">
+                                                            {item.title}
+                                                        </h3>
+                                                        <div className="border border-black/10 overflow-hidden bg-[#050505]">
+                                                            <CodeMirror
+                                                                value={item.code}
+                                                                height="80px"
+                                                                theme="dark"
+                                                                extensions={[python()]}
+                                                                editable={false}
+                                                                basicSetup={{
+                                                                    lineNumbers: true,
+                                                                    foldGutter: false,
+                                                                    dropCursor: false,
+                                                                    allowMultipleSelections: false,
+                                                                    indentOnInput: false,
+                                                                }}
+                                                                className="text-[10px] font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-full pt-1.5 border-t border-black/10 flex items-center justify-between mt-auto">
+                                                        <span className="text-[8px] font-black text-[#777] uppercase tracking-widest">Python</span>
+                                                        <button
+                                                            className="text-[8px] font-black uppercase tracking-widest bg-[#1a1a1a] text-white px-2.5 py-1 hover:bg-secondary hover:text-black transition-colors"
+                                                            onClick={() => handleCopyCode(item.code)}
+                                                        >
+                                                            COPY &rsaquo;
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="w-full pt-2 border-t border-slate-100 flex items-center justify-between mt-auto">
-                                                    <span className="text-[10px] font-mono text-slate-400">Python</span>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 px-3 text-[11px] font-mono text-primary hover:bg-primary/10 group/btn"
-                                                        onClick={() => handleCopyCode(item.code)}
-                                                    >
-                                                        Copy <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Pagination Arrows and Jump-to-Page for Codes */}
-                                <div className="flex flex-wrap items-center justify-center gap-3 mt-6 sm:mt-[3px]">
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-lg border border-border/50 hover:bg-primary/20 hover:text-primary disabled:opacity-20"
-                                            disabled={currentCodePage === 0}
-                                            onClick={() => setCurrentCodePage(prev => Math.max(0, prev - 1))}
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                                        </Button>
-
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-muted/10 border border-border/50 rounded-lg">
-                                            <span className="text-[11px] font-mono font-bold text-primary">
-                                                {currentCodePage + 1}
-                                            </span>
-                                            <span className="text-[11px] font-mono text-muted-foreground opacity-50">/</span>
-                                            <span className="text-[11px] font-mono text-muted-foreground">
-                                                {totalCodePages || 1}
-                                            </span>
-                                        </div>
-
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 rounded-lg border border-border/50 hover:bg-primary/20 hover:text-primary disabled:opacity-20"
-                                            disabled={currentCodePage + 1 >= totalCodePages}
-                                            onClick={() => setCurrentCodePage(prev => prev + 1)}
-                                        >
-                                            <ChevronRight className="w-3.5 h-3.5" />
-                                        </Button>
+                                {/* Pagination - Brutalist Square */}
+                                <div className="flex items-center justify-center gap-[1px] bg-white/5 p-[1px] mt-0">
+                                    <button
+                                        disabled={currentCodePage === 0}
+                                        onClick={() => setCurrentCodePage(prev => Math.max(0, prev - 1))}
+                                        className="px-4 py-2 text-[10px] font-black uppercase border border-white/10 bg-[#0a0a0a] text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        &laquo; PREV
+                                    </button>
+                                    <div className="px-6 py-2 text-[10px] font-black border border-white/10 bg-white text-[#0a0a0a]">
+                                        {currentCodePage + 1} / {totalCodePages || 1}
                                     </div>
-
-                                    {/* Jump to Page Search Bar */}
-                                    <div className="relative group">
-                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                    <div className="relative">
                                         <Input
                                             type="text"
-                                            placeholder="Jump to..."
+                                            placeholder="JUMP"
                                             value={jumpCodePage}
                                             onChange={(e) => setJumpCodePage(e.target.value)}
                                             onKeyDown={(e) => {
@@ -1075,197 +1112,198 @@ const InfiniteSpace = () => {
                                                     }
                                                 }
                                             }}
-                                            className="h-7 w-28 pl-7 pr-2 text-[10px] font-mono bg-muted/20 border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg"
+                                            className="h-[34px] w-20 text-center text-[10px] font-black uppercase bg-[#0a0a0a] border border-white/10 text-white rounded-none focus:border-secondary"
                                         />
                                     </div>
+                                    <button
+                                        disabled={currentCodePage + 1 >= totalCodePages}
+                                        onClick={() => setCurrentCodePage(prev => prev + 1)}
+                                        className="px-4 py-2 text-[10px] font-black uppercase border border-white/10 bg-[#0a0a0a] text-slate-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        NEXT &raquo;
+                                    </button>
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'challenges' && (
-                            <div className="flex-1 overflow-y-auto custom-scrollbar animate-in fade-in duration-500">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
-                                    <h2 className="text-2xl font-bold flex items-center gap-3 text-center sm:text-left">
-                                        <Swords className="w-7 h-7 text-secondary" />
-                                        Challenge Space
-                                    </h2>
+                            <div className="flex-1 bg-[#fdf6e3] text-[#0a0a0a] border border-white/10 flex flex-col p-4 sm:p-6 overflow-y-auto custom-scrollbar-brutalist">
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4 flex items-center gap-3">
+                                    <span className="h-[2px] w-6 bg-black/20" />
+                                    CHALLENGE_ARENA // SELECT_MODE
+                                    <span className="h-[2px] w-6 bg-black/20" />
+                                </p>
 
-                                    {/* Challenge Type Toggle */}
-                                    <div className="flex bg-muted/20 p-1 rounded-xl border border-border/50 backdrop-blur-md self-center sm:self-end">
-                                        <button
-                                            onClick={() => setChallengeType('solutions')}
-                                            className={cn(
-                                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono transition-all",
-                                                challengeType === 'solutions' ? "bg-secondary text-secondary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            <Code2 className="w-3.5 h-3.5" />
-                                            Code Solutions
-                                        </button>
-                                        <button
-                                            onClick={() => setChallengeType('typing')}
-                                            className={cn(
-                                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-mono transition-all",
-                                                challengeType === 'typing' ? "bg-secondary text-secondary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
-                                            )}
-                                        >
-                                            <Keyboard className="w-3.5 h-3.5" />
-                                            Typing Challenge
-                                        </button>
-                                    </div>
+                                {/* Challenge type picker - square */}
+                                <div className="flex gap-[1px] bg-black/10 p-[1px] mb-6 self-start">
+                                    <button
+                                        onClick={() => setChallengeType('solutions')}
+                                        className={cn(
+                                            "flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            challengeType === 'solutions' ? "bg-[#0a0a0a] text-white" : "text-slate-600 hover:bg-black/10"
+                                        )}
+                                    >
+                                        <Code2 className="w-3.5 h-3.5" />
+                                        Code Solutions
+                                    </button>
+                                    <button
+                                        onClick={() => setChallengeType('typing')}
+                                        className={cn(
+                                            "flex items-center gap-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                                            challengeType === 'typing' ? "bg-[#0a0a0a] text-white" : "text-slate-600 hover:bg-black/10"
+                                        )}
+                                    >
+                                        <Keyboard className="w-3.5 h-3.5" />
+                                        Typing Challenge
+                                    </button>
                                 </div>
 
                                 {challengeType === 'solutions' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 px-2 md:px-0">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                         {/* Play with Computer */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-primary/50 transition-all group relative overflow-hidden shadow-sm">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-primary/10 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-primary uppercase tracking-widest">
-                                                <Monitor className="w-3.5 h-3.5" />
-                                                Solo VS AI
+                                        <div className="group relative bg-white border-2 border-black p-5 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-primary text-black shrink-0">
+                                                    <Monitor className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">SOLO_VS_AI</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Play with Computer</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-primary transition-colors">
-                                                Play with Computer
-                                            </h3>
-                                            <p className="text-[13px] md:text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Battle against our advanced AI agent to sharpen your logic skills in a controlled, adaptive environment.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Battle our advanced AI agent. Sharpen your logic in a controlled, adaptive environment.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={handleStartBattle}
-                                                    className="bg-primary hover:bg-primary/90 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Start Battle
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={handleStartBattle}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-black transition-colors border-2 border-black"
+                                            >
+                                                START BATTLE &rsaquo;
+                                            </button>
                                         </div>
 
                                         {/* Play with a Player */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-secondary/50 transition-all group relative overflow-hidden shadow-sm flex flex-col">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-secondary/10 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-secondary/20 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-secondary uppercase tracking-widest">
-                                                <Swords className="w-3.5 h-3.5" />
-                                                PvP Arena
+                                        <div className="group relative bg-white border-2 border-black p-5 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-secondary text-black shrink-0">
+                                                    <Swords className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">PVP_ARENA</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Play with a Player</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-secondary transition-colors">
-                                                Play with a Player
-                                            </h3>
-                                            <p className="text-[13px] md:text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Enter the arena and challenge a peer to a real-time competitive programming duel for ultimate bragging rights.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Challenge a peer to a real-time competitive programming duel. Ultimate bragging rights await.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={handleFindMatch}
-                                                    className="bg-secondary hover:bg-secondary/90 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Find Match
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={handleFindMatch}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-secondary hover:text-black transition-colors border-2 border-black"
+                                            >
+                                                FIND MATCH &rsaquo;
+                                            </button>
                                         </div>
 
                                         {/* Join as a Moderator */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-green-500/50 transition-all group relative overflow-hidden shadow-sm flex flex-col">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/5 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-green-500/10 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-green-600 uppercase tracking-widest">
-                                                <ShieldCheck className="w-3.5 h-3.5" />
-                                                Instructor Role
+                                        <div className="group relative bg-white border-2 border-[#0a0a0a]/5 hover:border-emerald-600 p-5 transition-all duration-200 flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-emerald-500 text-black shrink-0">
+                                                    <ShieldCheck className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">INSTRUCTOR_ROLE</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Join as Moderator</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-green-600 transition-colors">
-                                                Join as a Moderator
-                                            </h3>
-                                            <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Create and host a custom challenge room for a specific number of students to join and compete simultaneously.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Host a custom challenge room for students to join and compete simultaneously.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={handleStartModerator}
-                                                    className="bg-green-600 hover:bg-green-700 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Create Game
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={handleStartModerator}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-colors border-2 border-black"
+                                            >
+                                                CREATE ARENA &rsaquo;
+                                            </button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 px-2 md:px-0">
-                                        {/* Play with Computer */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-orange-500/50 transition-all group relative overflow-hidden shadow-sm flex flex-col">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/5 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-orange-500/10 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-orange-600 uppercase tracking-widest">
-                                                <Monitor className="w-3.5 h-3.5" />
-                                                Solo Typing VS AI
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {/* Typing: Play with Computer */}
+                                        <div className="group relative bg-white border-2 border-[#0a0a0a]/5 hover:border-orange-500 p-5 transition-all duration-200 flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-orange-500 text-black shrink-0">
+                                                    <Monitor className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">SOLO_TYPING_VS_AI</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Play with Computer</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-orange-600 transition-colors">
-                                                Play with Computer
-                                            </h3>
-                                            <p className="text-[13px] md:text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Test your typing speed and accuracy against our AI. Master complex code snippets under pressure.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Test your typing speed against our AI. Master complex code snippets under pressure.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={() => {
-                                                        setIsSoloConfigOpen(true);
-                                                        setSoloConfigPhase('selection');
-                                                    }}
-                                                    className="bg-orange-600 hover:bg-orange-700 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Start Typing
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={() => { setIsSoloConfigOpen(true); setSoloConfigPhase('selection'); }}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 hover:text-black transition-colors border-2 border-black"
+                                            >
+                                                START TYPING &rsaquo;
+                                            </button>
                                         </div>
 
-                                        {/* Play with a Player */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-purple-500/50 transition-all group relative overflow-hidden shadow-sm flex flex-col">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-purple-500/10 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-purple-600 uppercase tracking-widest">
-                                                <Swords className="w-3.5 h-3.5" />
-                                                Typing Duel
+                                        {/* Typing: Play with a Player */}
+                                        <div className="group relative bg-white border-2 border-[#0a0a0a]/5 hover:border-purple-600 p-5 transition-all duration-200 flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-purple-500 text-white shrink-0">
+                                                    <Swords className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">TYPING_DUEL</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Play with a Player</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-purple-600 transition-colors">
-                                                Play with a Player
-                                            </h3>
-                                            <p className="text-[13px] md:text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Challenge another student to a real-time typing dual. May the fastest fingers win the prize.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Challenge another student to a real-time typing duel. May the fastest fingers win.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={handleFindMatch}
-                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Find Rival
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={handleFindMatch}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-colors border-2 border-black"
+                                            >
+                                                FIND RIVAL &rsaquo;
+                                            </button>
                                         </div>
 
-                                        {/* Join as a Moderator */}
-                                        <div className="bg-white p-5 md:p-6 rounded-2xl border border-border/50 hover:border-blue-500/50 transition-all group relative overflow-hidden shadow-sm flex flex-col">
-                                            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 rotate-45 translate-x-8 -translate-y-8 group-hover:bg-blue-500/10 transition-colors" />
-                                            <div className="flex items-center gap-2 mb-4 text-xs font-mono text-blue-600 uppercase tracking-widest">
-                                                <ShieldCheck className="w-3.5 h-3.5" />
-                                                Competition Host
+                                        {/* Typing: Join as Moderator */}
+                                        <div className="group relative bg-white border-2 border-[#0a0a0a]/5 hover:border-blue-600 p-5 transition-all duration-200 flex flex-col gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-blue-500 text-white shrink-0">
+                                                    <ShieldCheck className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">COMPETITION_HOST</p>
+                                                    <h3 className="text-base font-black uppercase tracking-tighter leading-tight">Join as Moderator</h3>
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg md:text-xl font-bold mb-2 text-slate-900 group-hover:text-blue-600 transition-colors">
-                                                Join as a Moderator
-                                            </h3>
-                                            <p className="text-[13px] md:text-sm text-slate-600 mb-6 leading-relaxed">
-                                                Create a custom typing challenge room for your students. Monitor their progress in real-time.
+                                            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-tight leading-tight opacity-80">
+                                                Create a custom typing challenge room. Monitor student progress in real-time.
                                             </p>
-                                            <div className="pt-4 border-t border-slate-100 mt-auto flex justify-end">
-                                                <Button
-                                                    onClick={handleStartModerator}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs px-6 h-9 rounded-lg"
-                                                >
-                                                    Create Arena
-                                                </Button>
-                                            </div>
+                                            <button
+                                                onClick={handleStartModerator}
+                                                className="mt-auto w-full py-2.5 bg-[#0a0a0a] text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-colors border-2 border-black"
+                                            >
+                                                CREATE ARENA &rsaquo;
+                                            </button>
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                                {/* Battle Arena View Layer */}
-                                {isBattleActive && (
+                {/* Battle Arena View Layer */}
+                {isBattleActive && (
                                     <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center pt-[76px] px-2 pb-2 sm:p-10 animate-in fade-in duration-300">
-                                        <div className="max-w-4xl w-full bg-[#0a0a0a] rounded-xl sm:rounded-3xl border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden max-h-full flex flex-col mt-1 sm:mt-0">
+                                        <div className="max-w-4xl w-full bg-[#0a0a0a] rounded-none sm:rounded-none border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden max-h-full flex flex-col mt-1 sm:mt-0">
                                             {/* Battle Header */}
                                             <div className="p-2 sm:p-5 border-b border-white/5 flex items-center justify-between">
                                                 <div className="flex items-center gap-2 sm:gap-3">
@@ -1285,7 +1323,7 @@ const InfiniteSpace = () => {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3">
+                                                <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-primary/10 border border-primary/20 rounded-none flex items-center gap-3">
                                                     <Trophy className="w-4 h-4 text-primary" />
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] uppercase tracking-widest text-primary/70 font-bold">Battle Score</span>
@@ -1371,7 +1409,7 @@ const InfiniteSpace = () => {
                                                                 disabled={showBattleFeedback || isCountingDown}
                                                                 onClick={() => handleBattleSelection(option)}
                                                                 className={cn(
-                                                                    "relative h-10 sm:h-20 flex items-center justify-center rounded-lg sm:rounded-2xl border text-[10px] sm:text-base font-bold font-mono transition-all duration-300",
+                                                                    "relative h-10 sm:h-20 flex items-center justify-center rounded-none sm:rounded-none border text-[10px] sm:text-base font-bold font-mono transition-all duration-300",
                                                                     battlePrediction === option
                                                                         ? (option === battleChallenges[currentBattleIndex]?.correct
                                                                             ? "bg-green-500/10 border-green-500 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
@@ -1394,10 +1432,10 @@ const InfiniteSpace = () => {
                                                 </div>
 
                                                 {showBattleFeedback && (
-                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-3 sm:p-6 bg-white/5 rounded-xl sm:rounded-2xl border border-white/5 animate-in slide-in-from-bottom-2">
+                                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-3 sm:p-6 bg-white/5 rounded-none sm:rounded-none border border-white/5 animate-in slide-in-from-bottom-2">
                                                         <div className="flex items-center gap-3 sm:gap-4">
                                                             <div className={cn(
-                                                                "w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-lg sm:text-xl",
+                                                                "w-10 h-10 sm:w-12 sm:h-12 rounded-none sm:rounded-none flex items-center justify-center font-bold text-lg sm:text-xl",
                                                                 battlePrediction === battleChallenges[currentBattleIndex]?.correct ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"
                                                             )}>
                                                                 {battlePrediction === battleChallenges[currentBattleIndex]?.correct ? "+10" : "0"}
@@ -1421,7 +1459,7 @@ const InfiniteSpace = () => {
                                                         </div>
                                                         <Button
                                                             onClick={handleNextBattleItem}
-                                                            className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 sm:px-8 sm:h-12 rounded-xl flex items-center gap-2 group"
+                                                            className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 sm:px-8 sm:h-12 rounded-none flex items-center gap-2 group"
                                                         >
                                                             {currentBattleIndex < battleChallenges.length - 1 ? "Next Mission" : "Finish Battle"}
                                                             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -1431,14 +1469,14 @@ const InfiniteSpace = () => {
                                             </div>
                                         </div>
                                     </div>
-                                )}
+                )}
 
-                                {/* Solo Battle Config Dialog */}
-                                {isSoloConfigOpen && (
-                                    <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-                                        <div className="max-w-2xl w-full bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(249,115,22,0.1)] overflow-hidden animate-in zoom-in-95 duration-300">
-                                            {/* Header */}
-                                            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                {/* Solo Battle Config Dialog */}
+                {isSoloConfigOpen && (
+                    <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+                        <div className="max-w-2xl w-full bg-[#0a0a0a] rounded-none border border-white/10 shadow-[0_0_50px_rgba(249,115,22,0.1)] overflow-hidden animate-in zoom-in-95 duration-300">
+                            {/* Header */}
+                            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
                                                 <div>
                                                     <h3 className="text-2xl font-bold flex items-center gap-3 text-white">
                                                         <Monitor className="w-6 h-6 text-orange-500" />
@@ -1481,7 +1519,7 @@ const InfiniteSpace = () => {
                                                                             }
                                                                         }}
                                                                         className={cn(
-                                                                            "h-12 rounded-xl border font-mono text-xs transition-all",
+                                                                            "h-12 rounded-none border font-mono text-xs transition-all",
                                                                             selectedDifficulties.includes(lvl)
                                                                                 ? "bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.1)]"
                                                                                 : "bg-white/5 border-white/5 text-slate-400 hover:text-white"
@@ -1502,7 +1540,7 @@ const InfiniteSpace = () => {
                                                                 <button
                                                                     onClick={() => setSelectedCategory(null)}
                                                                     className={cn(
-                                                                        "h-10 rounded-lg border font-mono text-[10px] transition-all",
+                                                                        "h-10 rounded-none border font-mono text-[10px] transition-all",
                                                                         selectedCategory === null
                                                                             ? "bg-white/10 border-white/20 text-white"
                                                                             : "bg-white/5 border-white/5 text-slate-500 opacity-50"
@@ -1515,7 +1553,7 @@ const InfiniteSpace = () => {
                                                                         key={cat}
                                                                         onClick={() => setSelectedCategory(cat)}
                                                                         className={cn(
-                                                                            "h-10 px-3 rounded-lg border font-mono text-[10px] truncate transition-all",
+                                                                            "h-10 px-3 rounded-none border font-mono text-[10px] truncate transition-all",
                                                                             selectedCategory === cat
                                                                                 ? "bg-orange-500/10 border-orange-500/50 text-orange-500"
                                                                                 : selectedCategory === null
@@ -1540,7 +1578,7 @@ const InfiniteSpace = () => {
                                                                 key={mode.id}
                                                                 onClick={() => setSelectedTimeLimit(mode.time)}
                                                                 className={cn(
-                                                                    "p-5 rounded-2xl border text-left transition-all group",
+                                                                    "p-5 rounded-none border text-left transition-all group",
                                                                     selectedTimeLimit === mode.time
                                                                         ? "bg-orange-500/10 border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
                                                                         : "bg-white/5 border-white/5 hover:border-white/10"
@@ -1585,7 +1623,7 @@ const InfiniteSpace = () => {
                                                             handleStartBattle();
                                                         }
                                                     }}
-                                                    className="h-14 flex-[2] bg-orange-600 hover:bg-orange-700 text-white font-mono text-lg rounded-xl shadow-xl shadow-orange-600/20"
+                                                    className="h-14 flex-[2] bg-orange-600 hover:bg-orange-700 text-white font-mono text-lg rounded-none shadow-xl shadow-orange-600/20"
                                                 >
                                                     {soloConfigPhase === 'selection' ? "Continue" : "Initialize Neural Lesson"}
                                                     <ChevronRight className="w-5 h-5 ml-2" />
@@ -1593,27 +1631,241 @@ const InfiniteSpace = () => {
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                                {/* Coming Soon/Power for Universities message */}
-                                <div className="mt-12 p-8 rounded-3xl bg-primary/5 border border-primary/20 text-center">
-                                    <BrainCircuit className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-                                    <h3 className="text-2xl font-bold mb-2 italic">Institutional Power</h3>
-                                    <p className="text-muted-foreground max-w-2xl mx-auto">
-                                        The Challenge Space is being optimized for university-wide hackathons and academic assessments.
-                                        Real-time leaderboards and peer-to-peer verification logic coming soon.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
                 )}
+
+
             </main>
+
+            {/* Fixed Bottom Nav Bar & Drawer */}
+            <AppDrawer 
+                stats={{
+                    problems: problems.length,
+                    codes: allCodePredictions.length,
+                    battles: battleChallenges.length
+                }}
+                onProblemsClick={() => setActiveTab('problems')}
+                onCodesClick={() => setActiveTab('codes')}
+                onChallengesClick={() => setActiveTab('challenges')}
+                onLeaderboardClick={() => setIsLeaderboardOpen(true)}
+            />
+
+            {/* ─── Problem Detail Modal ─── */}
+            {selectedProblem && (
+                <div
+                    className="fixed inset-0 z-[150] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                    onClick={() => setSelectedProblem(null)}
+                >
+                    <div
+                        className="bg-white w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className={cn(
+                            "px-5 py-3 flex items-center justify-between border-b border-black/10",
+                            selectedProblem.difficulty === 'Beginner' ? "bg-emerald-500" :
+                                selectedProblem.difficulty === 'Intermediate' ? "bg-amber-400" : "bg-rose-600"
+                        )}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-black/60">
+                                    {selectedProblem.difficulty} · {selectedProblem.category || 'General'}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setSelectedProblem(null)}
+                                className="w-6 h-6 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors"
+                            >
+                                <X className="w-3.5 h-3.5 text-black" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 flex flex-col gap-4">
+                            <h2 className="text-xl font-black uppercase tracking-tight text-[#1a1a1a] leading-tight">
+                                {selectedProblem.title}
+                            </h2>
+                            <div className="h-[1px] bg-black/10 w-full" />
+                            <p className="text-[13px] text-[#3a3a3a] leading-relaxed font-medium">
+                                {selectedProblem.description}
+                            </p>
+                            {selectedProblem.reward && (
+                                <div className="flex items-center gap-2 pt-2">
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-[#888]">Reward:</span>
+                                    <span className="text-[11px] font-black text-primary">{selectedProblem.reward}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 pb-5 flex gap-2">
+                            <button
+                                onClick={() => setSelectedProblem(null)}
+                                className="flex-1 py-2.5 text-[9px] font-black uppercase tracking-widest border-2 border-black/10 text-[#555] hover:bg-black/5 transition-colors"
+                            >
+                                Close
+                            </button>
+                            <button
+                                className="flex-[2] py-2.5 text-[9px] font-black uppercase tracking-widest bg-[#1a1a1a] text-white hover:bg-primary hover:text-black transition-colors"
+                            >
+                                Solve Problem &rsaquo;
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Global Leaderboard Slide-Up Modal ─── */}
+            {isLeaderboardOpen && (
+                <>
+                    <div className="fixed inset-0 z-[140] bg-black/80 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsLeaderboardOpen(false)} />
+                    <div className="fixed inset-x-0 bottom-0 top-[10%] md:top-[15%] pb-10 z-[150] bg-[#fdf6e3] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] flex flex-col animate-in slide-in-from-bottom-full duration-500 ease-out border-t-4 border-[#1a1a1a]">
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b-2 border-black/5 shrink-0">
+                            <div>
+                                <h2 className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a] flex items-center gap-3">
+                                    <Globe className="w-6 h-6 text-amber-500" />
+                                    Rankings: {leaderboardCategory}
+                                </h2>
+                                <p className="text-[10px] uppercase font-bold tracking-widest text-[#777] mt-1">
+                                    Based on {leaderboardCategory === 'Global' ? 'Solo, PvP & Challenges' : leaderboardCategory + ' Activity'}
+                                </p>
+                            </div>
+                            <button onClick={() => setIsLeaderboardOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors">
+                                <X className="w-5 h-5 text-[#1a1a1a]" />
+                            </button>
+                        </div>
+
+                        {/* Category Selector */}
+                        <div className="flex items-center gap-2 px-6 py-4 bg-white/50 border-b border-black/5 overflow-x-auto custom-scrollbar-brutalist hide-scrollbar">
+                            {['Global', 'Solo', 'PvP', 'Challenges'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setLeaderboardCategory(cat as any)}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-colors border",
+                                        leaderboardCategory === cat
+                                            ? "bg-[#1a1a1a] text-amber-400 border-[#1a1a1a]"
+                                            : "bg-white text-slate-500 border-black/10 hover:bg-black/5"
+                                    )}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto custom-scrollbar-brutalist flex flex-col">
+                            {/* Podium Section (2 - 1 - 3) */}
+                            <div className="flex items-end justify-center gap-2 sm:gap-6 px-4 pt-10 pb-6 shrink-0 relative bg-white/50 border-b-2 border-black/5">
+                                {/* 2nd Place */}
+                                {MOCK_LEADERBOARD[1] && (
+                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500 delay-150 relative z-10 w-20 sm:w-24">
+                                        <div className="relative mb-2">
+                                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-slate-200 rounded-full border-2 border-slate-300 shadow-md z-20">
+                                                <Crown className="w-3 h-3 text-slate-500" />
+                                            </div>
+                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-slate-300 bg-white overflow-hidden shadow-lg">
+                                                {MOCK_LEADERBOARD[1].avatar ? <img src={MOCK_LEADERBOARD[1].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-slate-300" />}
+                                            </div>
+                                            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-slate-300 flex items-center justify-center text-white font-black text-xs z-20">
+                                                2
+                                            </div>
+                                        </div>
+                                        <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[1].name}</h3>
+                                        <p className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-0.5">{MOCK_LEADERBOARD[1].score} PTS</p>
+                                        <div className="w-full h-16 sm:h-20 bg-gradient-to-t from-slate-200 to-slate-100 rounded-t-lg mt-3 border-x-[3px] border-t-[3px] border-slate-300 shadow-inner flex flex-col items-center justify-end pb-2">
+                                             <div className="w-full h-1.5 bg-slate-300/50 mb-0.5" />
+                                             <div className="w-full h-1.5 bg-slate-300/50 mb-0.5" />
+                                             <div className="w-full h-1.5 bg-slate-300/50" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 1st Place */}
+                                {MOCK_LEADERBOARD[0] && (
+                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-12 duration-500 relative z-20 w-24 sm:w-28">
+                                        <div className="relative mb-2">
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center bg-amber-400 rounded-full border-[3px] border-amber-300 shadow-lg z-20 animate-bounce">
+                                                <Crown className="w-4 h-4 text-amber-800" />
+                                            </div>
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-xl relative">
+                                                <div className="absolute inset-0 bg-amber-400/20 animate-pulse" />
+                                                {MOCK_LEADERBOARD[0].avatar ? <img src={MOCK_LEADERBOARD[0].avatar} alt="" className="w-full h-full object-cover relative z-10" /> : <User className="w-8 h-8 m-auto mt-4 text-amber-200 relative z-10" />}
+                                            </div>
+                                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 bg-[#1a1a1a] rounded-full border-[3px] border-amber-400 flex items-center justify-center text-amber-400 font-black text-sm z-20 shadow-md">
+                                                1
+                                            </div>
+                                        </div>
+                                        <h3 className="text-[11px] sm:text-xs font-black uppercase tracking-tight text-center text-[#1a1a1a] mt-1 line-clamp-1">{MOCK_LEADERBOARD[0].name}</h3>
+                                        <p className="text-[9px] sm:text-[10px] font-black text-amber-600 mt-0.5">{MOCK_LEADERBOARD[0].score} PTS</p>
+                                        <div className="w-full h-24 sm:h-28 bg-gradient-to-t from-amber-300 to-amber-200 rounded-t-lg mt-3 border-x-4 border-t-4 border-amber-400 shadow-inner flex flex-col items-center justify-end pb-3">
+                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
+                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
+                                             <div className="w-full h-2 bg-amber-400/40 mb-1" />
+                                             <div className="w-full h-2 bg-amber-400/40" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 3rd Place */}
+                                {MOCK_LEADERBOARD[2] && (
+                                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-6 duration-500 delay-300 relative z-10 w-20 sm:w-24">
+                                        <div className="relative mb-2">
+                                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center bg-orange-800/80 rounded-full border-2 border-orange-900 shadow-md z-20">
+                                                <Crown className="w-3 h-3 text-orange-200" />
+                                            </div>
+                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-[3px] border-orange-800/80 bg-white overflow-hidden shadow-lg">
+                                                {MOCK_LEADERBOARD[2].avatar ? <img src={MOCK_LEADERBOARD[2].avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 m-auto mt-3 text-orange-900/50" />}
+                                            </div>
+                                            <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#1a1a1a] rounded-full border-2 border-orange-900/80 flex items-center justify-center text-white font-black text-xs z-20">
+                                                3
+                                            </div>
+                                        </div>
+                                        <h3 className="text-[10px] sm:text-[11px] font-black uppercase tracking-tight text-center text-[#1a1a1a] line-clamp-1 mt-1">{MOCK_LEADERBOARD[2].name}</h3>
+                                        <p className="text-[8px] sm:text-[9px] font-bold text-orange-800/80 mt-0.5">{MOCK_LEADERBOARD[2].score} PTS</p>
+                                        <div className="w-full h-12 sm:h-14 bg-gradient-to-t from-orange-900/40 to-orange-800/30 rounded-t-lg mt-3 border-x-[3px] border-t-[3px] border-orange-900/60 shadow-inner flex flex-col items-center justify-end pb-2">
+                                            <div className="w-full h-1 bg-orange-900/30 mb-0.5" />
+                                            <div className="w-full h-1 bg-orange-900/30 mb-0.5" />
+                                            <div className="w-full h-1 bg-orange-900/30" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* List Section for ranks 4+ */}
+                            <div className="flex-1 flex flex-col gap-[2px] bg-black/5 px-4 sm:px-8 py-6">
+                                {MOCK_LEADERBOARD.slice(3).map((player, idx) => (
+                                    <div key={player.id} className="flex items-center gap-4 p-4 bg-white hover:bg-emerald-50 transition-colors border-2 border-black/5 hover:border-emerald-500 duration-200 group">
+                                        <div className="w-8 shrink-0 flex items-center justify-center font-black text-lg text-slate-400 group-hover:text-emerald-500 transition-colors">
+                                            #{player.rank}
+                                        </div>
+                                        <div className="w-10 h-10 rounded bg-[#1a1a1a] border border-black/10 shrink-0 overflow-hidden flex items-center justify-center">
+                                            {player.avatar ? <img src={player.avatar} alt="" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-white/50" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-black uppercase tracking-tight text-[#1a1a1a] group-hover:text-emerald-600 transition-colors line-clamp-1">
+                                                {player.name}
+                                            </h4>
+                                            <p className="text-[10px] font-bold text-[#777] uppercase tracking-widest mt-0.5 max-w-full truncate">
+                                                @{player.username}
+                                            </p>
+                                        </div>
+                                        <div className="shrink-0 text-right">
+                                            <p className="text-sm font-black text-[#1a1a1a]">{player.score.toLocaleString()}</p>
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Points</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* ─── Global PvP Overlays (Outside main for z-index safety) ─── */}
             {/* PvP Searching Overlay */}
             {pvpStatus === 'searching' && (
                 <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="max-w-md w-full bg-[#0a0a0a] rounded-3xl border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
+                    <div className="max-w-md w-full bg-[#0a0a0a] rounded-none border border-primary/20 shadow-[0_0_50px_rgba(34,197,94,0.1)] p-10 text-center space-y-8 animate-in zoom-in-95 duration-300 text-white">
                         <div className="relative mx-auto w-24 h-24">
                             <div className="absolute inset-0 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
                             <div className="absolute inset-4 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1676,14 +1928,14 @@ const InfiniteSpace = () => {
                     <div className="flex items-center justify-between px-2 py-1 sm:px-6 sm:py-2 border-b border-white/5 bg-[#0a0a0a] shrink-0 z-50 relative">
                         <button
                             onClick={handleQuitPvP}
-                            className="mr-1 sm:mr-2 p-1 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                            className="mr-1 sm:mr-2 p-1 rounded-none hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
                         >
                             <ArrowLeft className="w-4 h-4" />
                         </button>
 
                         {/* Player (You) — Left */}
                         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
-                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-primary font-mono shrink-0">
+                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-none sm:rounded-none bg-primary/10 border border-primary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-primary font-mono shrink-0">
                                 {user?.name?.[0]?.toUpperCase() ?? "?"}
                             </div>
                             <div className="flex flex-col min-w-0">
@@ -1694,7 +1946,7 @@ const InfiniteSpace = () => {
 
                         {/* Score — Center */}
                         <div className="flex flex-col items-center mx-1 sm:mx-4 shrink-0">
-                            <div className="flex items-center gap-1.5 sm:gap-3 px-2 py-0.5 sm:px-4 sm:py-1 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 shadow-inner">
+                            <div className="flex items-center gap-1.5 sm:gap-3 px-2 py-0.5 sm:px-4 sm:py-1 rounded-none sm:rounded-none bg-white/5 border border-white/10 shadow-inner">
                                 <span className="text-base sm:text-3xl font-black font-mono text-primary tabular-nums tracking-tighter">{pvpScore}</span>
                                 <span className="text-sm sm:text-2xl font-bold text-slate-500 font-mono">:</span>
                                 <span className="text-base sm:text-3xl font-black font-mono text-secondary tabular-nums tracking-tighter">{pvpOpponentScore}</span>
@@ -1714,7 +1966,7 @@ const InfiniteSpace = () => {
                                     )}
                                 </span>
                             </div>
-                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-secondary font-mono shrink-0">
+                            <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-none sm:rounded-none bg-secondary/10 border border-secondary/20 flex items-center justify-center text-[9px] sm:text-xs font-bold text-secondary font-mono shrink-0">
                                 {(pvpMatch.player1.email.toLowerCase() === user?.email.toLowerCase() ? pvpMatch.player2.name : pvpMatch.player1.name)?.[0]?.toUpperCase() ?? "?"}
                             </div>
                         </div>
@@ -1728,7 +1980,7 @@ const InfiniteSpace = () => {
                                 <Terminal className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                 Challenge {currentPvPIndex + 1} / {pvpMatch.challenges.length}
                             </p>
-                            <div className="flex-1 rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden relative">
+                            <div className="flex-1 rounded-none sm:rounded-none border border-white/10 overflow-hidden relative">
                                 <div className={cn("w-full h-full", isPvPCountingDown && "blur-md grayscale")}>
                                     <CodeMirror
                                         value={pvpMatch.challenges[currentPvPIndex]?.code || ""}
@@ -1771,7 +2023,7 @@ const InfiniteSpace = () => {
                                             disabled={showPvPFeedback || pvpTimer === 0 || isPvPCountingDown}
                                             onClick={() => handlePvPSelection(option)}
                                             className={cn(
-                                                "relative h-10 sm:h-20 flex items-center justify-center rounded-lg sm:rounded-2xl border text-[10px] sm:text-base font-bold font-mono transition-all duration-300",
+                                                "relative h-10 sm:h-20 flex items-center justify-center rounded-none sm:rounded-none border text-[10px] sm:text-base font-bold font-mono transition-all duration-300",
                                                 pvpPrediction === option
                                                     ? option === pvpMatch.challenges[currentPvPIndex]?.correct
                                                         ? "bg-green-500/10 border-green-500 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)]"
@@ -1793,10 +2045,10 @@ const InfiniteSpace = () => {
                             </div>
 
                             {showPvPFeedback && (
-                                <div className="mt-4 p-3 sm:p-5 bg-white/[0.03] rounded-xl sm:rounded-2xl border border-white/10 space-y-3 sm:space-y-4 animate-in slide-in-from-bottom-4 shrink-0">
+                                <div className="mt-4 p-3 sm:p-5 bg-white/[0.03] rounded-none sm:rounded-none border border-white/10 space-y-3 sm:space-y-4 animate-in slide-in-from-bottom-4 shrink-0">
                                     <div className="flex items-center gap-3 sm:gap-4">
                                         <div className={cn(
-                                            "w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-lg sm:text-xl border",
+                                            "w-10 h-10 sm:w-12 sm:h-12 rounded-none sm:rounded-none flex items-center justify-center font-bold text-lg sm:text-xl border",
                                             pvpPrediction === pvpMatch.challenges[currentPvPIndex]?.correct
                                                 ? "bg-green-500/20 text-green-400 border-green-500/30"
                                                 : "bg-red-500/20 text-red-400 border-red-500/30"
@@ -1816,7 +2068,7 @@ const InfiniteSpace = () => {
                                     </div>
                                     <Button
                                         onClick={handleNextPvPItem}
-                                        className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-white font-mono rounded-lg sm:rounded-xl group text-xs sm:text-sm"
+                                        className="w-full h-10 sm:h-11 bg-primary hover:bg-primary/90 text-white font-mono rounded-none sm:rounded-none group text-xs sm:text-sm"
                                     >
                                         {currentPvPIndex < pvpMatch.challenges.length - 1 ? "Next Challenge" : "Finish Match"}
                                         <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -1830,7 +2082,7 @@ const InfiniteSpace = () => {
 
             {isModeratorActive && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
-                    <div className="max-w-6xl w-full bg-[#0a0a0a] rounded-3xl border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden flex flex-col md:flex-row h-[80vh]">
+                    <div className="max-w-6xl w-full bg-[#0a0a0a] rounded-none border border-white/5 shadow-[0_0_100px_rgba(34,197,94,0.1)] overflow-hidden flex flex-col md:flex-row h-[80vh]">
                         {/* Main Content: IDE */}
                         <div className="flex-1 flex flex-col min-w-0 border-r border-white/5">
                             <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
@@ -1873,7 +2125,7 @@ const InfiniteSpace = () => {
                                                 {JOINED_STUDENTS.map(student => (
                                                     <div key={student.id} className="flex flex-col items-center gap-2 group transition-all animate-in fade-in zoom-in-95 duration-300">
                                                         <div className="relative">
-                                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-lg font-bold text-primary group-hover:scale-105 transition-transform shadow-lg shadow-primary/5">
+                                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-none bg-primary/10 border border-primary/20 flex items-center justify-center text-lg font-bold text-primary group-hover:scale-105 transition-transform shadow-lg shadow-primary/5">
                                                                 {student.avatar}
                                                             </div>
                                                             <div className={cn(
@@ -1890,7 +2142,7 @@ const InfiniteSpace = () => {
                                                 {/* Empty slots to indicate capacity */}
                                                 {[...Array(5)].map((_, i) => (
                                                     <div key={`empty-${i}`} className="flex flex-col items-center gap-2 opacity-5">
-                                                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-dashed border-white flex items-center justify-center">
+                                                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-none border-2 border-dashed border-white flex items-center justify-center">
                                                             <Users2 className="w-6 h-6 text-white" />
                                                         </div>
                                                         <div className="h-2 w-10 bg-white/20 rounded-full" />
@@ -1902,7 +2154,7 @@ const InfiniteSpace = () => {
                                         <div className="mt-auto pt-6 border-t border-white/5 flex justify-center">
                                             <Button
                                                 onClick={handleStartMission}
-                                                className="h-12 px-10 bg-primary hover:bg-primary/90 text-white font-mono text-sm rounded-xl shadow-xl shadow-primary/20 flex items-center gap-3 active:scale-95 transition-transform"
+                                                className="h-12 px-10 bg-primary hover:bg-primary/90 text-white font-mono text-sm rounded-none shadow-xl shadow-primary/20 flex items-center gap-3 active:scale-95 transition-transform"
                                             >
                                                 Start Mission
                                                 <Play className="w-4 h-4 fill-current" />
@@ -1944,7 +2196,7 @@ const InfiniteSpace = () => {
                                 {moderatorPhase === 'active' && (
                                     <Button
                                         onClick={handleNextModeratorItem}
-                                        className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 rounded-xl flex items-center gap-2 group"
+                                        className="bg-primary hover:bg-primary/90 text-white font-mono px-6 h-10 rounded-none flex items-center gap-2 group"
                                     >
                                         {currentModeratorIndex < allFilteredCodes.length - 1 ? "Next Mission" : "Finish Review"}
                                         <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -1969,13 +2221,13 @@ const InfiniteSpace = () => {
                                 {!isLinkGenerated ? (
                                     <Button
                                         onClick={handleGenerateLink}
-                                        className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-mono text-sm rounded-xl shadow-lg shadow-green-600/10"
+                                        className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-mono text-sm rounded-none shadow-lg shadow-green-600/10"
                                     >
                                         Generate Join Link
                                     </Button>
                                 ) : (
                                     <div className="space-y-4 animate-in slide-in-from-right-4">
-                                        <div className="p-4 bg-black/40 rounded-xl border border-white/10 space-y-2">
+                                        <div className="p-4 bg-black/40 rounded-none border border-white/10 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[10px] font-mono text-muted-foreground uppercase">Access Code</span>
                                                 <span className="text-[10px] font-mono text-green-500 uppercase">Live</span>
@@ -2013,34 +2265,7 @@ const InfiniteSpace = () => {
             )}
 
 
-            {/* Navigation Bar */}
-            {user && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-[100]">
-                    <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-1 shadow-2xl shadow-black/50 flex items-center justify-around">
-                        <button
-                            onClick={() => navigate("/dashboard")}
-                            className="flex flex-col items-center gap-0.5 p-1.5 text-slate-400 hover:text-emerald-500 transition-colors group"
-                        >
-                            <LayoutDashboard className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Dash</span>
-                        </button>
-                        <button
-                            onClick={() => navigate("/infinite-space")}
-                            className="flex flex-col items-center gap-0.5 p-1.5 text-emerald-500 transition-colors group"
-                        >
-                            <Zap className="w-4 h-4 scale-110 transition-transform" />
-                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Space</span>
-                        </button>
-                        <button
-                            onClick={() => navigate(`/profile/${user?.username || 'me'}`)}
-                            className="flex flex-col items-center gap-0.5 p-1.5 text-slate-400 hover:text-emerald-500 transition-colors group"
-                        >
-                            <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                            <span className="text-[9px] font-mono font-bold uppercase tracking-tighter">Profile</span>
-                        </button>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 };

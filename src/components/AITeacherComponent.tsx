@@ -73,6 +73,8 @@ const AITeacherComponent = () => {
     const [activeHighlightIndex, setActiveHighlightIndex] = useState<number>(-1);
     const [pointerPosition, setPointerPosition] = useState({ top: 0, left: 0 });
     const [displayedCode, setDisplayedCode] = useState("");
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const dragStartRef = useRef<number | null>(null);
 
     const editorRef = useRef<any>(null);
     const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -248,6 +250,26 @@ const AITeacherComponent = () => {
         if (lesson) playInteractiveLesson(lesson);
     };
 
+    const handleHeaderDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        dragStartRef.current = x;
+    };
+
+    const handleHeaderDragEnd = (e: React.MouseEvent | React.TouchEvent, panel: 'explanation' | 'code') => {
+        if (dragStartRef.current === null) return;
+        
+        const x = 'changedTouches' in e ? e.changedTouches[0].clientX : (e as React.MouseEvent).clientX;
+        const delta = x - dragStartRef.current;
+        dragStartRef.current = null;
+
+        const threshold = 50; // px
+        if (panel === 'code' && delta > threshold) {
+            setIsPanelOpen(true);
+        } else if (panel === 'explanation' && delta < -threshold) {
+            setIsPanelOpen(false);
+        }
+    };
+
 
     // Update pointer position and editor decorations based on highlights
     useEffect(() => {
@@ -311,40 +333,40 @@ const AITeacherComponent = () => {
     }, [activeHighlightIndex, lesson]);
 
     return (
-        <div className="flex-1 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Top Bar / Categories */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {categories.map((cat) => (
-                    <button
-                        key={cat.id}
-                        onClick={() => handleCategoryClick(cat.id, cat.name)}
-                        className="group p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all flex flex-col items-center gap-2 text-center"
-                    >
-                        <cat.icon className="w-6 h-6 text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                        <span className="text-xs font-black uppercase tracking-widest text-slate-300 group-hover:text-white">{cat.name}</span>
-                    </button>
-                ))}
-            </div>
-
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
+        <div className="flex-1 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
+            <div className="flex-1 flex flex-row min-h-0 relative">
                 {/* Left: AI explanation and Input */}
-                <div className="lg:w-1/3 flex flex-col gap-4">
-                    <div className="flex-1 bg-white/5 border border-white/10 rounded-[2rem] p-6 overflow-y-auto flex flex-col relative group shadow-2xl">
-                        <div className="flex justify-between items-center mb-4">
+                <div 
+                    className={cn(
+                        "flex flex-col gap-4 transition-all duration-500 ease-in-out border-r-2 border-black/10 pr-6 mr-6 h-full",
+                        isPanelOpen ? "w-full lg:w-1/3 opacity-100" : "w-0 opacity-0 pointer-events-none !mr-0 !pr-0 border-none"
+                    )}
+                >
+                    <div className="flex-1 bg-white border-2 border-black/10 p-6 overflow-y-auto flex flex-col relative group shadow-2xl">
+                        <div 
+                            className="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing border-b border-black/5 pb-2"
+                            onMouseDown={handleHeaderDragStart}
+                            onMouseUp={(e) => handleHeaderDragEnd(e, 'explanation')}
+                            onTouchStart={handleHeaderDragStart}
+                            onTouchEnd={(e) => handleHeaderDragEnd(e, 'explanation')}
+                        >
                             <span className="text-[10px] font-black text-emerald-500 font-mono tracking-widest uppercase italic">{"// AI Teacher Insight"}</span>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400 hover:text-emerald-500"
-                                onClick={() => setMuted(!muted)}
-                            >
-                                {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest animate-pulse">{"< swipe to hide"}</span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-emerald-500"
+                                    onClick={() => setMuted(!muted)}
+                                >
+                                    {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                </Button>
+                            </div>
                         </div>
 
                         {lesson ? (
-                            <div className="prose prose-invert prose-sm max-w-none">
-                                <p className="text-slate-200 leading-relaxed font-medium">
+                            <div className="prose prose-sm max-w-none text-[#1a1a1a]">
+                                <p className="text-[#1a1a1a] leading-relaxed font-medium">
                                     {lesson.explanation}
                                 </p>
 
@@ -355,15 +377,15 @@ const AITeacherComponent = () => {
                                             <div
                                                 key={i}
                                                 className={cn(
-                                                    "p-3 rounded-xl border transition-all cursor-pointer",
+                                                    "p-3 border-2 transition-all cursor-pointer",
                                                     activeHighlightIndex === i
                                                         ? "bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20"
-                                                        : "bg-white/5 border-transparent hover:border-white/10"
+                                                        : "bg-black/5 border-transparent hover:border-black/10"
                                                 )}
                                                 onClick={() => setActiveHighlightIndex(i)}
                                             >
-                                                <p className="text-xs font-bold text-emerald-400 mb-1">Lines {h.lines?.join('-') || 'N/A'}</p>
-                                                <p className="text-xs text-slate-400">{h.comment}</p>
+                                                <p className="text-xs font-bold text-emerald-600 mb-1">Lines {h.lines?.join('-') || 'N/A'}</p>
+                                                <p className="text-xs text-slate-600">{h.comment}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -377,7 +399,7 @@ const AITeacherComponent = () => {
                         )}
 
                         {isLoading && (
-                            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-[2rem] z-20">
+                            <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-20">
                                 <div className="flex flex-col items-center gap-3">
                                     <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
                                     <span className="text-xs font-black uppercase tracking-widest text-emerald-500 animate-pulse">Consulting AI...</span>
@@ -391,7 +413,7 @@ const AITeacherComponent = () => {
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
                             placeholder="Ask Vectors anything about Python..."
-                            className="w-full bg-white/5 border border-white/10 rounded-[1.5rem] p-4 pr-16 text-sm resize-none focus:outline-none focus:border-emerald-500/50 transition-all h-24 placeholder:text-slate-600 font-medium"
+                            className="w-full bg-white border-2 border-black/10 p-4 pr-16 text-sm resize-none focus:outline-none focus:border-emerald-500/50 transition-all h-24 placeholder:text-slate-400 font-medium text-black"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
@@ -402,7 +424,7 @@ const AITeacherComponent = () => {
                         <Button
                             onClick={() => fetchLesson()}
                             disabled={isLoading || !prompt.trim()}
-                            className="absolute right-4 bottom-4 h-10 w-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/20"
+                            className="absolute right-4 bottom-4 h-10 w-10 rounded-none border-2 border-emerald-900 bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/20"
                         >
                             <MessageSquare className="w-5 h-5" />
                         </Button>
@@ -410,9 +432,20 @@ const AITeacherComponent = () => {
                 </div>
 
                 {/* Right: Code Container */}
-                <div className="flex-1 bg-slate-900 border border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl relative min-h-[400px]">
-                    <div className="px-6 py-4 border-b border-white/5 bg-black/40 flex items-center justify-between">
+                <div className="flex-1 bg-slate-900 border-2 border-black/10 overflow-hidden flex flex-col shadow-2xl relative min-h-[400px]">
+                    <div 
+                        className="px-6 py-4 border-b-2 border-black/20 bg-black/60 flex items-center justify-between cursor-grab active:cursor-grabbing"
+                        onMouseDown={handleHeaderDragStart}
+                        onMouseUp={(e) => handleHeaderDragEnd(e, 'code')}
+                        onTouchStart={handleHeaderDragStart}
+                        onTouchEnd={(e) => handleHeaderDragEnd(e, 'code')}
+                    >
                         <div className="flex items-center gap-3">
+                            {!isPanelOpen && (
+                                <div className="flex items-center gap-2 bg-emerald-500/10 px-2 py-1 rounded-none border border-emerald-500/30 mr-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">{"swipe right for insights >"}</span>
+                                </div>
+                            )}
                             <div className="flex gap-1.5">
                                 <div className="w-3 h-3 rounded-full bg-red-500/20" />
                                 <div className="w-3 h-3 rounded-full bg-amber-500/20" />
@@ -422,11 +455,11 @@ const AITeacherComponent = () => {
                         </div>
 
                         {isSpeaking ? (
-                            <Button size="sm" variant="destructive" className="h-8 rounded-lg font-black text-[10px] tracking-widest uppercase" onClick={stopSpeaking}>
+                            <Button size="sm" variant="destructive" className="h-8 rounded-none border-2 border-red-900 font-black text-[10px] tracking-widest uppercase" onClick={stopSpeaking}>
                                 <Square className="w-3 h-3 mr-2 fill-current" /> Stop Audio
                             </Button>
                         ) : lesson && (
-                            <Button size="sm" className="h-8 rounded-lg font-black text-[10px] tracking-widest uppercase bg-emerald-600 hover:bg-emerald-500 text-white" onClick={handlePlayExplanation}>
+                            <Button size="sm" className="h-8 rounded-none border-2 border-emerald-900 font-black text-[10px] tracking-widest uppercase bg-emerald-600 hover:bg-emerald-500 text-white" onClick={handlePlayExplanation}>
                                 <Play className="w-3 h-3 mr-2" /> Play Explanation
                             </Button>
                         )}
